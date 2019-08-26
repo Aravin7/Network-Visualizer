@@ -8,6 +8,7 @@ var isUpdate = false;
 var allNodes;
 
 
+
 /* request config from server */
 fetch(server_url).then(res => res.json())
     .then(data => {
@@ -160,7 +161,8 @@ var createGraph = function (ipopObj) {
     for (var i = 0; i < ipopObj.getNumNodes(); i++) {
 
         var nodeID = ipopObj.getNodeIDList()[i];
-        var jsonStr = '{ "data": { "id": "' + nodeID + '" },"grabbable": false,"selectable": true}';
+        var nodeName = ipopObj.getNodeList()[nodeID]['NodeName'];
+        var jsonStr = '{ "data": { "id": "' + nodeID + '", "name": "' + nodeName + '" },"grabbable": false,"selectable": true}';
         var linkIDList = ipopObj.getLinkIDListOf(nodeID);
 
         /* build cytoscape node and link json */
@@ -264,8 +266,7 @@ var createGraph = function (ipopObj) {
 
     allNodes = cy.nodes();
 
-    /* for see all nodes data */
-    console.log(allNodes);
+/* for see all nodes data */
 }
 
 
@@ -901,7 +902,71 @@ var restageEvent = function (tippyID, nodeIdTippy, tippyList) {
 
 /* for search */
 $(document).ready(function () {
-    $('input[type="search"][class="form-control border-0"]').keypress(function (event) {
+
+    $("#searchForm").typeahead({
+        name: 'search-dataset',
+        source: function (query, cb) {
+
+            function matches(str, q) {
+                str = (str || '').toLowerCase();
+                q = (q || '').toLowerCase();
+                return str.match(q);
+            }
+
+            let field = 'name';
+
+            function anyFieldMatches(n) {
+                if (matches(n.data(field), query)) {
+                    return true;
+                }
+                return false;
+            }
+
+            function getData(n) {
+                return n.data();
+            }
+
+            function sortByName(n1, n2) {
+                if (n1.data(field) < n2.data(field)) {
+                    return -1;
+                }
+                else if (n1.data(field) > n2.data(field)) {
+                    return 1;
+                }
+                return 0;
+            }
+
+            var res = allNodes.stdFilter(anyFieldMatches).sort(sortByName).map(getData);
+            cb(res);
+        },
+        updater: function (item) {
+            let target = item.id;
+            cy.getElementById(target).trigger('click')
+        },
+        
+    }).keypress(function (event) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if (keycode == '13') {
+            $(".tt-suggestion:first-child", this).trigger('click');
+            return false;
+        }
+    })
+
+
+  /*  .on('keyup', function (e) {
+        if (e.which == 13) {
+            $(".tt-suggestion:first-child", this).trigger('click');
+        }
+        return false;
+    });*/
+
+
+
+
+    /*search();*/
+    
+
+   /* $('input[type="search"][class="form-control border-0"]').keypress(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '13') {
             let searchText = $('input[type="search"][class="form-control border-0"]').val();
@@ -920,7 +985,10 @@ $(document).ready(function () {
             $('input[type="search"][class="form-control border-0"]').val("");
             return false;
         }
-    })
+    })*/
 })
+
+
+
 
 
