@@ -92,4 +92,33 @@
       transform: scale(1.5);
     }
   }
+
+
+  /* for search */
+
+.tt-menu { /* UPDATE: newer versions use tt-menu instead of tt-dropdown-menu */
+    width: 100%;
+    max-height: 500px;
+    overflow-y: auto;
+    position: relative;
+    border-radius: 4px;
+    background-color: #fff;
+    margin-top:12px;
+    padding: 8px 0;
+}
+
+.tt-suggestion {
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+.tt-suggestion:hover {
+    color: #f0f0f0;
+    background-color: #0097cf;
+}
+
+.tt-suggestion p {
+    margin: 5px;
+}
+
   

@@ -357,7 +357,7 @@ var clickEvent = function (ipopObj, cy, tippyList) {
                 });
 
             } else {
-                /* Event of  node  */
+            /* Event of  node  */
 
                 let nodeName = ipopObj.getNodeList()[objID]["NodeName"];
 
@@ -903,8 +903,14 @@ var restageEvent = function (tippyID, nodeIdTippy, tippyList) {
 /* for search */
 $(document).ready(function () {
 
-    $("#searchForm").typeahead({
-        name: 'search-dataset',
+    var search = $('#searchForm').typeahead(
+         {
+            hint: true,
+            highlight: true,
+            minLength: 1,
+        },
+        {
+        name: 'search-datasetr',
         source: function (query, cb) {
 
             function matches(str, q) {
@@ -913,11 +919,16 @@ $(document).ready(function () {
                 return str.match(q);
             }
 
-            let field = 'name';
+            let fields = ['name', 'id'];
+            let sortBy = 'name';
 
             function anyFieldMatches(n) {
-                if (matches(n.data(field), query)) {
-                    return true;
+
+                for (let i = 0; i < fields.length; i++) {
+                    let f = fields[i];
+                    if (matches(n.data(f), query)) {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -927,10 +938,76 @@ $(document).ready(function () {
             }
 
             function sortByName(n1, n2) {
-                if (n1.data(field) < n2.data(field)) {
+                if (n1.data(sortBy) < n2.data(sortBy)) {
                     return -1;
                 }
-                else if (n1.data(field) > n2.data(field)) {
+                else if (n1.data(sortBy) > n2.data(sortBy)) {
+                    return 1;
+                }
+                return 0;
+            }
+
+            var res = allNodes.stdFilter(anyFieldMatches).sort(sortByName).map(getData);
+            cb(res);
+            },
+        templates: {
+            empty: [
+                `<p><strong>Unable</strong> to find any node that match the current query.</p>`
+            ].join('\n'),
+            suggestion: function (data) {
+                return `<p>${data.name} - ${data.id}</p>`;
+            }
+            },
+
+        }).on(
+            {
+                'typeahead:selected': function (event, data) {
+                    search.typeahead('val', '');
+                    let target = data.id;
+                    cy.getElementById(target).trigger('click');
+                },
+                'keypress': function (event) {
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if (keycode == '13') {
+                        $(".tt-suggestion:first-child").trigger('click');
+                        return false;
+                    }
+                }
+            });
+
+ /*   $("#searchForm").typeahead({
+        name: 'search-dataset',
+        source: function (query, cb) {
+
+            function matches(str, q) {
+                str = (str || '').toLowerCase();
+                q = (q || '').toLowerCase();
+                return str.match(q);
+            }
+
+            let fields = ['name', 'id'];
+            let sortBy = 'name';
+
+            function anyFieldMatches(n) {
+
+                for (let i = 0; i < fields.length; i++) {
+                    let f = fields[i];
+                    if (matches(n.data(f), query)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function getData(n) {
+                return n.data();
+            }
+
+            function sortByName(n1, n2) {
+                if (n1.data(sortBy) < n2.data(sortBy)) {
+                    return -1;
+                }
+                else if (n1.data(sortBy) > n2.data(sortBy)) {
                     return 1;
                 }
                 return 0;
@@ -941,16 +1018,16 @@ $(document).ready(function () {
         },
         updater: function (item) {
             let target = item.id;
-            cy.getElementById(target).trigger('click')
+            cy.getElementById(target).trigger('click');
         },
-        
     }).keypress(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '13') {
             $(".tt-suggestion:first-child", this).trigger('click');
             return false;
         }
-    })
+    })*/
+
 
 
   /*  .on('keyup', function (e) {
