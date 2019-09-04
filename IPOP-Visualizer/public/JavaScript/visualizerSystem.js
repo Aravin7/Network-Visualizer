@@ -5,7 +5,6 @@ var serverIP;
 var allowOrigin;
 var url;
 var isUpdate = false;
-var allNodes;
 
 
 
@@ -106,8 +105,7 @@ async function requestIPOPData(overlayID) {
         .then(function(overlays, status) {
             if (status == "error") throw error;
             $.getJSON(nodeURL).then(function(nodes) {
-                $.getJSON(edgeURL).then(function(links) {
-
+                $.getJSON(edgeURL).then(function (links) {
                     var ipopObj = new BuildIPOPData();
                     /* you can set data by another way */
                     /* in this case i just sleepy*/
@@ -170,8 +168,13 @@ var createGraph = function(ipopObj) {
             var tgtNodeID = ipopObj.getLinkListOf(nodeID)[linkID]["TgtNodeId"];
             var srcNodeID = ipopObj.getLinkListOf(nodeID)[linkID]["SrcNodeId"];
             var interfaceName = ipopObj.getLinkListOf(nodeID)[linkID]["InterfaceName"];
+            var type = ipopObj.getLinkListOf(nodeID)[linkID]["Type"];
+            var colorType = "#56C5BC";
+            if (type.match("Long")) {
+                colorType = "#6f42c1";
+            }
             if (ipopObj.getNodeIDList().includes(tgtNodeID)) {
-                var linkStr = '{ "data": { "id": "' + linkID + '", "source": "' + srcNodeID + '", "target": "' + tgtNodeID + '", "interfaceName": "' + interfaceName + '" } }'
+                var linkStr = '{ "data": { "id": "' + linkID + '", "source": "' + srcNodeID + '", "target": "' + tgtNodeID + '", "interfaceName": "' + interfaceName + '", "color": "' + colorType + '" } }'
                 linkList.push(JSON.parse(linkStr));
             }
 
@@ -208,13 +211,13 @@ var createGraph = function(ipopObj) {
                 style: {
                     'curve-style': 'haystack',
                     'z-index': "999999",
-                    "line-color": "#56C5BC",
+                    "line-color": "data(color)",
                 }
             }, {
                 selector: "edge:selected",
                 style: {
                     'width': 10,
-                    "line-color": "#56C5BC"
+                    "line-color": "data(color)"
                 }
             }
         ],
@@ -263,9 +266,6 @@ var createGraph = function(ipopObj) {
 
     isUpdate = true;
 
-    allNodes = cy.nodes();
-
-    /* for see all nodes data */
 }
 
 
@@ -367,7 +367,7 @@ var clickEvent = function(ipopObj, cy, tippyList) {
                 $("#inTravel").html('Node: <strong>' + nodeName + '</strong>');
 
                 cy.style().selector('node').style({ width: 36.37, height: 36.37, "background-color": "#9FC556" }).update();
-                cy.style().selector('edge').style({ 'curve-style': 'haystack', 'line-color': '#56C5BC', 'z-index': "999999" }).update();
+                cy.style().selector('edge').style({ 'curve-style': 'haystack', 'line-color': 'data(color)', 'z-index': "999999" }).update();
                 restageEvent(tippyID, nodeIdTippy, tippyList);
 
                 nodeIdTippy = objID;
@@ -404,7 +404,7 @@ var clickEvent = function(ipopObj, cy, tippyList) {
             /* if user click on each part that not graph */
             restageEvent(tippyID, nodeIdTippy, tippyList);
             cy.style().selector('node').style({ width: 36.37, height: 36.37, "background-color": "#9FC556" }).update();
-            cy.style().selector('edge').style({ 'curve-style': 'haystack', 'line-color': '#56C5BC', 'z-index': "999999" }).update();
+            cy.style().selector('edge').style({ 'curve-style': 'haystack', 'line-color': 'data(color)', 'z-index': "999999" }).update();
 
             $('#travel').hide();
             $('#overLayBox').show();
@@ -494,7 +494,7 @@ var nodeSelect = function(cy, objID, ipopObj) {
             tID = cy.edges('[id = "' + linkID + '"]').data("source");
         }
         cy.style().selector('node[id=\"' + tID + '\"]').style({ width: 36.37, height: 36.37, "background-color": "#9FC556" }).update();
-        cy.style().selector('edge[id=\"' + linkID + '\"]').style({ 'curve-style': 'haystack', 'line-color': '#56C5BC', 'z-index': "999999999" }).update();
+        cy.style().selector('edge[id=\"' + linkID + '\"]').style({ 'curve-style': 'haystack', 'line-color': 'data(color)', 'z-index': "999999999" }).update();
     })
 
 };
@@ -506,7 +506,7 @@ var edgeSelect = function(cy, objID, sourceID, targetID) {
     cy.style().selector('edge').style({ 'curve-style': 'haystack', 'line-color': '#4B6483', 'z-index': "0" }).update();
     cy.style().selector('node[id=\"' + sourceID + '\"]').style({ width: 36.37, height: 36.37, "background-color": "#9FC556" }).update();
     cy.style().selector('node[id=\"' + targetID + '\"]').style({ width: 36.37, height: 36.37, "background-color": "#9FC556" }).update();
-    cy.style().selector('edge[id=\"' + objID + '\"]').style({ 'curve-style': 'haystack', 'line-color': '#56C5BC', 'z-index': "999999" }).update();
+    cy.style().selector('edge[id=\"' + objID + '\"]').style({ 'curve-style': 'haystack', 'line-color': 'data(color)', 'z-index': "999999" }).update();
 };
 
 /*******************************************************This 3 function you can refactor it to be only 1 function ****************************************************************************** */
@@ -900,15 +900,13 @@ var restageEvent = function(tippyID, nodeIdTippy, tippyList) {
 }
 
 /* for search */
-$(document).ready(function() {
-
-    var search = $('#searchForm').typeahead({
-        hint: true,
-        highlight: true,
-        minLength: 1,
-    }, {
+var search = $('#searchForm').typeahead({
+    hint: true,
+    highlight: true,
+    minLength: 1,
+}, {
         name: 'search-datasetr',
-        source: function(query, cb) {
+        source: function (query, cb) {
 
             function matches(str, q) {
                 str = (str || '').toLowerCase();
@@ -944,122 +942,35 @@ $(document).ready(function() {
             }
 
             var res = cy.elements().stdFilter(anyFieldMatches).sort(sortByName).map(getData);
-            console.log(res)
             cb(res);
         },
         templates: {
             empty: [
                 `<p><strong>Unable</strong> to find any node that match the current query.</p>`
             ].join('\n'),
-            suggestion: function(data) {
+            suggestion: function (data) {
                 if (data.name !== undefined) {
-                    return `<p><strong>Node Name</strong>:${data.name}<br><strong>Node ID</strong>:${data.id.substr(0,7)}</p>`;
+                    return `<p><strong>Node Name</strong> : ${data.name}<br><strong>Node ID</strong> : ${data.id.substr(0, 7)}</p>`;
                 }
-                return `<p><strong>Tunnel ID</strong>:${data.id.substr(0,7)}<br><strong>Interface Name</strong>:${data.interfaceName}</p>`;
+                return `<p><strong>Tunnel ID</strong> : ${data.id.substr(0, 7)}<br><strong>Interface Name</strong> : ${data.interfaceName}</p>`;
             }
         },
 
     }).on({
-        'typeahead:selected': function(event, data) {
+        'typeahead:selected': function (event, data) {
             search.typeahead('val', '');
-            let target = data.id;
-            cy.getElementById(target).trigger('click');
+            makeActionWhenSearch(cy.getElementById(data.id))
         },
-        'keypress': function(event) {
+        'keypress': function (event) {
             var keycode = (event.keyCode ? event.keyCode : event.which);
             if (keycode == '13') {
-                $(".tt-suggestion:first-child").trigger('click');
+                makeActionWhenSearch($(".tt-suggestion:first-child"));
                 return false;
             }
         }
     });
 
-    /*   $("#searchForm").typeahead({
-           name: 'search-dataset',
-           source: function (query, cb) {
-
-               function matches(str, q) {
-                   str = (str || '').toLowerCase();
-                   q = (q || '').toLowerCase();
-                   return str.match(q);
-               }
-
-               let fields = ['name', 'id'];
-               let sortBy = 'name';
-
-               function anyFieldMatches(n) {
-
-                   for (let i = 0; i < fields.length; i++) {
-                       let f = fields[i];
-                       if (matches(n.data(f), query)) {
-                           return true;
-                       }
-                   }
-                   return false;
-               }
-
-               function getData(n) {
-                   return n.data();
-               }
-
-               function sortByName(n1, n2) {
-                   if (n1.data(sortBy) < n2.data(sortBy)) {
-                       return -1;
-                   }
-                   else if (n1.data(sortBy) > n2.data(sortBy)) {
-                       return 1;
-                   }
-                   return 0;
-               }
-
-               var res = allNodes.stdFilter(anyFieldMatches).sort(sortByName).map(getData);
-               cb(res);
-           },
-           updater: function (item) {
-               let target = item.id;
-               cy.getElementById(target).trigger('click');
-           },
-       }).keypress(function (event) {
-           var keycode = (event.keyCode ? event.keyCode : event.which);
-           if (keycode == '13') {
-               $(".tt-suggestion:first-child", this).trigger('click');
-               return false;
-           }
-       })*/
-
-
-
-    /*  .on('keyup', function (e) {
-          if (e.which == 13) {
-              $(".tt-suggestion:first-child", this).trigger('click');
-          }
-          return false;
-      });*/
-
-
-
-
-    /*search();*/
-
-
-    /* $('input[type="search"][class="form-control border-0"]').keypress(function (event) {
-         var keycode = (event.keyCode ? event.keyCode : event.which);
-         if (keycode == '13') {
-             let searchText = $('input[type="search"][class="form-control border-0"]').val();
-             if (allNodes != null) {
-                 let searchTarget = cy.getElementById(searchText);
-                 if (searchTarget != null) {
-                     searchTarget.trigger('click');
-                 }
-                 else {
-                     alert("Not Matching");
-                 }
-             }
-             else {
-                     alert("Not Matching");
-             }
-             $('input[type="search"][class="form-control border-0"]').val("");
-             return false;
-         }
-     })*/
-})
+var makeActionWhenSearch = function (cyElement) {
+    cyElement.select();
+    cyElement.trigger('click');
+}
