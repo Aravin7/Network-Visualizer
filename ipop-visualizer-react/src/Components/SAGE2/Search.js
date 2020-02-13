@@ -1,6 +1,7 @@
 import React from 'react';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
+// import "../../CSS/SAGE2.css";
 
 const element = [];
 
@@ -16,6 +17,12 @@ class Search extends React.Component {
     }
 
     componentDidMount() {
+        let value = {
+            width: 851,
+            height: 350
+        }
+        window.SAGE2_AppState.callFunctionInContainer('setWindowSize', value);
+
         let message = {
             nameOfComponent: `searchComponent`,
             callback: `responeSearchOption`
@@ -57,7 +64,10 @@ class Search extends React.Component {
                     option.data.id.toLowerCase().indexOf(props.text.toLowerCase()) !== -1);
             }
             else {
-                return (option.data.id.toLowerCase().indexOf(props.text.toLowerCase()) !== -1);
+                return (option.data.id.toLowerCase().indexOf(props.text.toLowerCase()) !== -1
+                ||
+                   option.data.label.toLowerCase().indexOf(props.text.toLowerCase()) !== -1
+                ); 
             }
         }
 
@@ -72,7 +82,7 @@ class Search extends React.Component {
                         return (`${element.data.label}`);
                     }
                     else {
-                        return (`${element.data.id}`);
+                        return (`${element.data.label}`);
                     }
                 }}
                 maxResults={5}
@@ -80,18 +90,17 @@ class Search extends React.Component {
                 onChange={selected => {
                     try {
                         this.setState({ selected });
-                        //console.log(selected[0].data.id);
                         this.selectOption(selected[0].data.id);
                     } catch (e) {
 
                     }
                 }}
                 options={element}
-                placeholder="search here"
+                placeholder="Search node or edge..."
                 renderMenuItemChildren={(option) => {
                     return (
                         <>
-                            <div>
+                            <div className="optionsLabel">
                                 {option.data.label}
                             </div>
                             <small>ID:{option.data.id}</small>

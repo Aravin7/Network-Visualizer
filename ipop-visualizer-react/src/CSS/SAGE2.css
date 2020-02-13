@@ -73,7 +73,7 @@ header{
 #rightPanel{
     color: white;
     position: absolute;
-    width: 20vw;
+    width: 24vw;
     right: 0;
     padding: 1%;
     margin-top: 0.05%;
@@ -108,7 +108,8 @@ header{
 }
 
 #leftTools{
-    position: absolute;
+    position: fixed;
+    height: 100vh;
     z-index: 2;
 }
 
@@ -174,9 +175,17 @@ header{
 }
 
 .DetailsLabel{
-    
     color: gray;
     font-size: 14px;
+}
+
+#switchBtn{
+    width: 30px;
+    height:30px;
+    border: none;
+    outline: none;
+    background: url(../Images/Icons/swap_ic.svg)no-repeat;
+    background-size: cover;
 }
 
 #cy{
@@ -187,3 +196,21 @@ header{
     top: 0;
     float: left;
 }
+
+.ToolPage {
+    background-color: #101B2B;
+    color:white;
+    height: 100vh;
+}
+
+.optionsLabel{
+    font-size: 150%;
+}
+
+/* .rbt-input-hint-container input{
+    height: 30vh;
+}
+
+.rbt-menu > li a {
+    height: 100px;
+} */

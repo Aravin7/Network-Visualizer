@@ -12,7 +12,14 @@ import RightPanel from "./RightPanel";
 class Graph extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { nodes: [], links: [], minZoom: 0.2, maxZoom: 2, zoom: 1, renderGraph: false, selectedOverlay: '101000F', graphType: 'main' /** For React test */ };
+        this.state = {
+            nodes: [], links: [], minZoom: 0.2
+            , maxZoom: 2, zoom: 1
+            , renderGraph: false
+            , switchToggle: false
+            , isShowRightPanel: false
+            , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
+        };
         window.graphComponent = this;
     }
 
@@ -45,8 +52,8 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
-        this.fetchData();
-        //this.requestGraphProperty();
+        //this.fetchData();
+        this.requestGraphProperty();
     }
 
     requestGraphProperty = () => {
@@ -164,7 +171,7 @@ class Graph extends React.Component {
                                 var target = links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
 
                                 if (Object.keys(nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
-                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}" } }`;
+                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}" } }`;
                                     linkList.push(JSON.parse(linkJSON));
                                 }
                                 this.setState({ links: linkList });
@@ -275,15 +282,71 @@ class Graph extends React.Component {
         else {
             rightPanelContent = <div></div>
         }
-        ReactDOM.render(rightPanelContent, document.getElementById("rightPanel"));
+        ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
-    createEdgeDetail = (linkDetails) => {
+    handleSwitch = () => {
+        this.setState(prevState => {
+            return { switchToggle: !prevState.switchToggle }
+        })
+    }
+
+    createEdgeDetail = (element, linkDetails) => {
         var rightPanelContent;
-        if (linkDetails) {
+        if (linkDetails && element) {
+
+            var sourceNodeDetails;
+            var targetNodeDetails;
+
+            if (this.state.switchToggle) {
+                sourceNodeDetails = this.state.ipop.getNodeDetails(element.data().target);
+                targetNodeDetails = this.state.ipop.getNodeDetails(element.data().source);
+            } else {
+                sourceNodeDetails = this.state.ipop.getNodeDetails(element.data().source);
+                targetNodeDetails = this.state.ipop.getNodeDetails(element.data().target);
+            }
+
             rightPanelContent = <div>
-                <CollapseButton></CollapseButton>
                 <h5>{linkDetails.InterfaceName}</h5>
+
+                <div className="row">
+
+                    <div className="col-10" style={{ paddingRight: "0" }}>
+
+                        <CollapseButton className="sourceNodeBtn" key={sourceNodeDetails.nodeID + "Btn"} id={sourceNodeDetails.nodeID + "Btn"} name={sourceNodeDetails.nodeName}>
+
+                            <div className="DetailsLabel">Node ID</div>
+                            {sourceNodeDetails.nodeID}
+
+                            <div className="DetailsLabel">State</div>
+                            {sourceNodeDetails.nodeState}
+
+                            <div className="DetailsLabel">City/Country</div>
+                            {sourceNodeDetails.nodeLocation}
+
+                        </CollapseButton>
+
+                        <CollapseButton className="targetNodeBtn" key={targetNodeDetails.nodeID + "Btn"} id={targetNodeDetails.nodeID + "Btn"} name={targetNodeDetails.nodeName}>
+
+                            <div className="DetailsLabel">Node ID</div>
+                            {targetNodeDetails.nodeID}
+
+                            <div className="DetailsLabel">State</div>
+                            {targetNodeDetails.nodeState}
+
+                            <div className="DetailsLabel">City/Country</div>
+                            {targetNodeDetails.nodeLocation}
+
+                        </CollapseButton>
+
+                    </div>
+
+                    <div className="col" style={{ margin: "auto", padding: "0", textAlign: "center" }}>
+                        <button onClick={this.handleSwitch} id="switchBtn" />
+                    </div>
+
+                </div>
+
                 <div className="DetailsLabel">Tunnel ID</div>
                 {linkDetails.TunnelID}
                 <div className="DetailsLabel">Interface Name</div>
@@ -304,18 +367,20 @@ class Graph extends React.Component {
                 {linkDetails.LocalAddress}
                 <div className="DetailsLabel">Latency</div>
                 {linkDetails.Latency}
+
                 <Card.Body className="transmissionCard">
                     Sent
-                <div className="DetailsLabel">Byte Sent</div>
+                            <div className="DetailsLabel">Byte Sent</div>
                     -
-                <div className="DetailsLabel">Total Byte Sent</div>
+                            <div className="DetailsLabel">Total Byte Sent</div>
                     {linkDetails.Stats[0].sent_total_bytes}
                 </Card.Body>
+
                 <Card.Body className="transmissionCard">
                     Received
-                <div className="DetailsLabel">Byte Received</div>
+                            <div className="DetailsLabel">Byte Received</div>
                     -
-                <div className="DetailsLabel">Total Byte Received</div>
+                            <div className="DetailsLabel">Total Byte Received</div>
                     {linkDetails.Stats[0].recv_total_bytes}
                 </Card.Body>
             </div>
@@ -323,15 +388,15 @@ class Graph extends React.Component {
         else {
             rightPanelContent = <div></div>
         }
-        ReactDOM.render(rightPanelContent, document.getElementById("rightPanel"));
+        ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
     // toggle overlay right panel
     togglePanel = () => {
         this.setState(prevState => {
-            return { isToggle: !prevState.isToggle };
+            return { isShowRightPanel: !prevState.isShowRightPanel };
         })
-        if (this.state.isToggle) {
+        if (this.state.isShowRightPanel) {
             document.getElementById("rightPanel").hidden = true;
         } else {
             document.getElementById("rightPanel").hidden = false;
@@ -365,7 +430,6 @@ class Graph extends React.Component {
 
                                         this.cy.zoom(this.state.zoom)
                                         this.cy.center()
-                                        //console.log(this.cy.json());
 
                                         /** Handle event click on elements */
                                         this.cy.on('click', (event) => {
@@ -376,39 +440,43 @@ class Graph extends React.Component {
                                                 var element = event.target;
                                                 _this.handleClickCyElement(element.id());
                                                 if (_this.state.graphType === 'main') {
-                                                    if (element.isNode()) {
-                                                        cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass('transparent'); /** Style for test */
-                                                        var neighborElement = cy.elements(element.incomers().union(element.outgoers()));
-                                                        var connectedNodes = neighborElement.filter((ele) => {
-                                                            return ele.isNode();
-                                                        })
-                                                        var nodeDetails = _this.state.ipop.getNodeDetails(event.target.id());
-                                                        console.log(nodeDetails);
-                                                        _this.createNodeDetail(connectedNodes, nodeDetails);
+                                                    // if (element.isNode()) {
+                                                    //     cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass('transparent'); /** Style for test */
+                                                    //     var neighborElement = cy.elements(element.incomers().union(element.outgoers()));
+                                                    //     var connectedNodes = neighborElement.filter((ele) => {
+                                                    //         return ele.isNode();
+                                                    //     })
+                                                    //     var nodeDetails = _this.state.ipop.getNodeDetails(event.target.id());
+                                                    //     _this.createNodeDetail(connectedNodes, nodeDetails);
 
-                                                    }
-                                                    else {
-                                                        _this.createEdgeDetail(_this.state.ipop.getLinkDetails(element.data().source, element.data().id));
-                                                    }
+                                                    // }
+                                                    // else {
+                                                    //     cy.elements().difference(element.connectedNodes()).not(element).addClass('transparent'); /** Style for test */
+                                                    //     _this.createEdgeDetail(element, _this.state.ipop.getLinkDetails(element.data().source, element.data().id));
+                                                    // }
                                                     element.addClass('selected');
                                                 }
                                                 else {
                                                     if (element.isNode()) {
+                                                        /** Set clickable for connected elements */
                                                         cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass('transparent');
-                                                        //cy.elements(element.outgoers().union(element.incomers())).not(element).addClass('')
+                                                        cy.elements(element.incomers().union(element.outgoers())).style('display','element')
+                                                        /** Set unclickable for not connected elements */
+                                                        cy.elements().difference(element.outgoers().union(element.incomers())).not(element).style('display','none');
                                                         var neighborElement = cy.elements(element.incomers().union(element.outgoers()));
                                                         var connectedNodes = neighborElement.filter((ele) => {
                                                             return ele.isNode();
                                                         })
                                                         var nodeDetails = _this.state.ipop.getNodeDetails(event.target.id());
-                                                        console.log(nodeDetails);
                                                         _this.createNodeDetail(connectedNodes, nodeDetails);
-                                                        element.addClass('selected');
                                                     }
                                                     else {
                                                         cy.elements().difference(element.connectedNodes()).not(element).addClass('transparent');
-                                                        _this.createEdgeDetail(_this.state.ipop.getLinkDetails(element.data().source, element.data().id));
+                                                        /** Set unclickable for not connected elements */
+                                                        cy.elements().difference(element.connectedNodes()).not(element).style('display','none')
+                                                        _this.createEdgeDetail(element, _this.state.ipop.getLinkDetails(element.data().source, element.data().id));
                                                     }
+                                                    element.addClass('selected');
 
                                                 }
 
@@ -472,13 +540,13 @@ class Graph extends React.Component {
                                         }, {
                                             selector: 'node.transparent',
                                             style: {
-                                                'opacity': '0.0',
+                                                'opacity': '0.1',
                                             }
                                         },
                                         {
                                             selector: 'edge.transparent',
                                             style: {
-                                                'opacity': '0.0',
+                                                'opacity': '0.1',
                                             }
                                         },
                                     ]}
@@ -495,7 +563,7 @@ class Graph extends React.Component {
                     </section>
 
                     <button onClick={this.togglePanel} id="overlayRightPanelBtn" />
-                    <RightPanel rightPabelTopic='Details'></RightPanel>
+                    <RightPanel rightPanelTopic='Details'></RightPanel>
 
 
                 </div>

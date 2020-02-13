@@ -5,6 +5,7 @@ import refresh_ic from '../../Images/Icons/IconToolPage/Refresh.svg';
 import search_ic from '../../Images/Icons/IconToolPage/Search.svg';
 import info_ic from '../../Images/Icons/IconToolPage/Info.svg';
 import rearrange_ic from '../../Images/Icons/IconToolPage/Rearrange.svg';
+import "../../CSS/SAGE2.css";
 
 class Tool extends React.Component {
     constructor(props) {
@@ -40,7 +41,7 @@ class Tool extends React.Component {
 
     render() {
         return (
-            <div className='ToolPage' style={{ backgroundColor: "#101B2B", color: "white" }}>
+            <div className='ToolPage'>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('overlay')}><img src={overlay_ic} alt="overlay_ic" /></Button>
                 <Button type="button" variant="link" className=""><img src={refresh_ic} alt="refresh_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('search')}><img src={search_ic} alt="search_ic" /></Button>
