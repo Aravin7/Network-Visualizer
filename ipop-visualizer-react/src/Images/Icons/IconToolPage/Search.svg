@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="157" viewBox="0 0 140 157">
+  <defs>
+    <filter id="Rectangle_1021" x="0" y="0" width="140" height="140" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-opacity="0.251"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Search" transform="translate(10 7)">
+    <g id="Search-2" data-name="Search">
+      <g transform="matrix(1, 0, 0, 1, -10, -7)" filter="url(#Rectangle_1021)">
+        <g id="Rectangle_1021-2" data-name="Rectangle 1021" transform="translate(10 7)" fill="#213758" stroke="#405b80" stroke-width="1">
+          <rect width="120" height="120" rx="6" stroke="none"/>
+          <rect x="-0.5" y="-0.5" width="121" height="121" rx="6.5" fill="none"/>
+        </g>
+      </g>
+      <path id="search-3" data-name="search" d="M62.109,58.558l-15.3-15.914a25.947,25.947,0,1,0-19.867,9.27,25.679,25.679,0,0,0,14.871-4.7L57.23,63.252a3.385,3.385,0,1,0,4.88-4.694ZM26.941,6.771A19.186,19.186,0,1,1,7.755,25.957,19.207,19.207,0,0,1,26.941,6.771Z" transform="translate(27.798 27.948)" fill="#b9c5d5"/>
+    </g>
+    <text id="Search-4" data-name="Search" transform="translate(60 145)" fill="#fff" font-size="22" font-family="Tahoma"><tspan x="-32.866" y="0">Search</tspan></text>
+  </g>
+</svg>

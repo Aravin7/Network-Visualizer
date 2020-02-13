@@ -1,0 +1,189 @@
+customize global
+*{
+    font-family: tahoma;
+}
+
+#root{
+    width: 100vw;
+    height: 100vh;
+    overflow:hidden;
+}
+
+/* customize Herder Tag */
+header{
+    color: white;
+    padding-top: 0.5%;
+    padding-bottom: 0.5%;
+    background-color: #213758;
+}
+
+/* customize title name */
+#ipopTitle{
+    transform: translateY(20%);
+}
+
+/* customize view selector */
+#viewSelector{
+    height: 100%;
+    outline: none;
+    border-radius: 3px;
+}
+
+/* customize search bar */
+#search{
+    width: 100%;
+    outline: none;
+    color: white;
+    border-radius: 3px;
+    border-color: #101B2B;
+    background-color: #101B2B;
+}
+
+#container{
+    width: 100%;
+    height: 100%;
+}
+
+/* customize main content */
+#mainContent{
+    position: fixed;
+    width: 100vw;
+    color: white;
+    height: 100%;
+    background-color: #101B2B;
+}
+
+/* customize overlay button */
+.overlay{
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.overlay_ic{
+    width: 75%;
+}
+
+/* .overlayLabel{
+    width: 100%;
+    color: white;
+    border-radius: 3px;
+    border:solid #405B80 ;
+    background-color: #213758;
+} */
+
+/* customize right panel */
+#rightPanel{
+    color: white;
+    /*position: absolute;*/
+    width: 20vw;
+    padding: 1%;
+    background-color: #213758;
+    z-index: 1;
+    right: 0;
+    margin-top: 0.05%;
+}
+
+#leftTools{
+   position: fixed;
+   margin: 0;
+   z-index: 2;
+   height: 100%;
+   width: 1vw;
+}
+
+#midArea{
+    width: 100vw;
+    margin: 0;
+    z-index: 1;
+}
+
+.overlayBtn{
+    /* width: 100%;
+    color: white; */
+    border-radius: 3px;
+    border: solid #486186;
+    background-color: #405B80;
+}
+
+#homeBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/home_ic.svg);
+}
+
+#refreshBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/refresh_ic.svg);
+}
+
+#infoBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/info_ic.svg);
+}
+
+#configBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/config_ic.svg);
+}
+
+#plusBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/plus_ic.svg);
+}
+
+#zoomSlider{
+    height: 18.5%;
+}
+
+#zoomSlider input{
+    -webkit-transform-origin-y: 250%;
+    -webkit-transform-origin-x: 60%;
+    transform: rotate(-90deg);
+    width: fit-content;
+    height: fit-content;
+}
+
+#minusBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/minus_ic.svg);
+}
+
+#cy{
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    float: left;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

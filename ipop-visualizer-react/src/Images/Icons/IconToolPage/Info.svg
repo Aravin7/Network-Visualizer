@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="157" viewBox="0 0 140 157">
+  <defs>
+    <filter id="Rectangle_1021" x="0" y="0" width="140" height="140" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-opacity="0.251"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Info" transform="translate(10 7)">
+    <g transform="matrix(1, 0, 0, 1, -10, -7)" filter="url(#Rectangle_1021)">
+      <g id="Rectangle_1021-2" data-name="Rectangle 1021" transform="translate(10 7)" fill="#213758" stroke="#405b80" stroke-width="1">
+        <rect width="120" height="120" rx="6" stroke="none"/>
+        <rect x="-0.5" y="-0.5" width="121" height="121" rx="6.5" fill="none"/>
+      </g>
+    </g>
+    <g id="info-button" transform="translate(29.316 28.316)">
+      <g id="Group_173" data-name="Group 173">
+        <path id="Path_62" data-name="Path 62" d="M54.876,9.414a32.146,32.146,0,1,0,0,45.462A32.149,32.149,0,0,0,54.876,9.414ZM36.337,46.122a4.193,4.193,0,0,1-8.386,0V29.35a4.193,4.193,0,0,1,8.386,0ZM32.07,22.183A3.739,3.739,0,0,1,28.1,18.361a3.737,3.737,0,0,1,4.024-3.873,3.856,3.856,0,1,1-.049,7.7Z" transform="translate(0 0)" fill="#8fa7c7"/>
+      </g>
+    </g>
+    <text id="Info-2" data-name="Info" transform="translate(61 145)" fill="#fff" font-size="22" font-family="Tahoma"><tspan x="-19.712" y="0">Info</tspan></text>
+  </g>
+</svg>

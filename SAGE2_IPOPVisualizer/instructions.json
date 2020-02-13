@@ -1,0 +1,15 @@
+{
+    "main_script":"SAGE2_IPOPVisualizer.js",
+    "icon":"ipop.png",
+    "width": 1680,
+    "height": 1080,
+    "resize": "free",
+    "animation" : true,
+    "dependencies" : [],
+    "load":{},
+    "title": "SAGE2_IPOPVisualizer",
+    "description": "SAGE2 application ipop",
+    "keywords": ["sage2","ipop"],
+    "author": "",
+    "license": "SAGE2-Software-License"
+}

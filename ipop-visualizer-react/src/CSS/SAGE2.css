@@ -1,0 +1,189 @@
+/* customize global */
+*{
+    font-family: tahoma;
+    font-size: 16px;
+}
+
+#root{
+    width: 100vw;
+    height: 100vh;
+}
+
+/* customize Herder Tag */
+header{
+    width: 100vw;
+    height: 6vh;
+    color: white;
+    background-color: #213758;
+}
+
+/* customize title name */
+#ipopTitle{
+    transform: translateY(20%);
+}
+
+/* customize view selector */
+#viewSelector{
+    outline: none;
+    border-radius: 3px;
+}
+
+/* customize search bar */
+#search{
+    width: 100%;
+    margin-bottom: 2%;
+    outline: none;
+    color: white;
+    border-radius: 3px;
+    border-color: #101B2B;
+    background-color: #101B2B;
+}
+
+#container{
+    position: absolute;
+    width: 100vw;
+    height: 94vh;
+}
+
+/* customize main content */
+#mainContent{
+    position: fixed;
+    width: 100vw;
+    color: white;
+    height: 100vh;
+    background-color: #101B2B;
+}
+
+#midArea{
+    margin: auto;
+}
+
+/* customize overlay button */
+.overlay{
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.overlay_ic{
+    width: 75%;
+}
+
+/* customize right panel */
+#rightPanel{
+    color: white;
+    position: absolute;
+    width: 20vw;
+    right: 0;
+    padding: 1%;
+    margin-top: 0.05%;
+    background-color: #213758;
+    z-index: 1;
+}
+
+.transmissionCard{
+    border-radius: 3px;
+    border: solid #486186;
+    background-color: #405B80;
+    margin-bottom: 1%;
+}
+
+#overlayRightPanelBtn{
+    margin: 0.5%;
+    right: 0;
+    width: 30px;
+    border: none;
+    height: 30px;
+    outline: none;
+    position: fixed;
+    background: url(../Images/Icons/menu_ic.svg) no-repeat;
+    background-size: contain;
+    z-index: 2;
+}
+
+.overlayBtn{
+    border-radius: 3px;
+    border: solid #486186;
+    background-color: #405B80;
+}
+
+#leftTools{
+    position: absolute;
+    z-index: 2;
+}
+
+#midArea{
+    margin: 0;
+    width: 100%;
+    padding: 0;
+}
+
+#homeBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/home_ic.svg);
+}
+
+#refreshBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/refresh_ic.svg);
+}
+
+#infoBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/info_ic.svg);
+}
+
+#configBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/config_ic.svg);
+}
+
+#plusBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/plus_ic.svg);
+}
+
+#zoomSlider{
+}
+
+#zoomSlider input{
+
+}
+
+#minusBtn{
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/minus_ic.svg);
+}
+
+.DetailsLabel{
+    
+    color: gray;
+    font-size: 14px;
+}
+
+#cy{
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    float: left;
+}
