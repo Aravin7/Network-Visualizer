@@ -8,6 +8,7 @@ import CreateGraphContents from './CreateGraphContents';
 import CollapseButton from "./CollapseButton";
 import Card from "react-bootstrap/Card";
 import RightPanel from "./RightPanel";
+import CytoscapeStyle from './CytoscapeStyle';
 
 class Graph extends React.Component {
     constructor(props) {
@@ -15,9 +16,12 @@ class Graph extends React.Component {
         this.state = {
             nodes: [], links: [], minZoom: 0.2
             , maxZoom: 2, zoom: 1
-            , renderGraph: false
             , switchToggle: false
             , isShowRightPanel: false
+            , nodeDetails: null
+            , linkDetails: null
+            , currentSelectedElement: null
+            , graphType: null
             , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
         };
         window.graphComponent = this;
@@ -52,8 +56,15 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
+        document.getElementById("rightPanel").hidden = true;
         //this.fetchData();
         this.requestGraphProperty();
+    }
+
+    componentDidUpdate() {
+        if ((this.state.linkDetails !== null) && (this.state.graphType === 'sub')) {
+            this.createEdgeDetail(true);
+        }
     }
 
     requestGraphProperty = () => {
@@ -66,10 +77,10 @@ class Graph extends React.Component {
 
     responseGraphProperty = (packet) => {
         packet = JSON.parse(packet);
-        this.setState({ selectedOverlay: packet.overlayId });
+        this.setState({ selectedOverlay: packet.overlayId, graphType: packet.graphType });
         if (packet.graphType === 'main') {
             let value = {
-                width: 2160,
+                width: 2480,
                 height: 1640
             }
             window.SAGE2_AppState.callFunctionInContainer('setWindowSize', value);
@@ -78,10 +89,14 @@ class Graph extends React.Component {
         else {
             this.createSubGraph(packet).then((value) => {
                 this.setState({ renderGraph: value });
+                this.renderGraph();
             }).then(() => {
                 if (packet.targetId) {
                     this.handleSelectCyElement(packet.targetId);
                 }
+            })
+            .catch((e) => {
+                console.log(e);
             });
         }
         this.setState({ graphType: packet.graphType });
@@ -141,6 +156,11 @@ class Graph extends React.Component {
         window.SAGE2_AppState.callFunctionInContainer(`set`, packet);
     }
 
+    /**
+     * Method for get IPOP data from IPOP server.
+     * 
+     * @method fetchData
+     */
     fetchData = () => {
         var intervalNo = new Date().toISOString().split(".")[0];
         var serverIP = '18.220.44.57:5000';
@@ -184,6 +204,7 @@ class Graph extends React.Component {
                     }
                     ).then(res => {
                         this.setState({ renderGraph: true });
+                        this.renderGraph();
                     }).then(res => {
                         this.setDataForSearch(this.cy.json());
                     })
@@ -192,7 +213,7 @@ class Graph extends React.Component {
 
     /** click from inside */
     handleClickCyElement = (id) => {
-        console.log(`selected:${id}`);
+        //console.log(`selected:${id}`);
         switch (this.state.graphType) {
             case 'main':
                 let packet = {
@@ -213,26 +234,31 @@ class Graph extends React.Component {
         element.trigger('click');
     }
 
-    createNodeDetail = (connectedNodes, nodeDetails) => {
+    createNodeDetail = (flag) => {
         var rightPanelContent;
-        if (connectedNodes && nodeDetails) {
+        if (flag) {
+            var sourceNode = this.state.nodeDetails.sourceNode;
+            var connectedNodes = this.state.nodeDetails.connectedNodes;
+            var ipop = this.state.ipop;
             rightPanelContent = <div>
-                <h5>{nodeDetails.nodeName}</h5>
+
+                <h5>{sourceNode.nodeName}</h5>
 
                 <div className="DetailsLabel">Node ID</div>
-                {nodeDetails.nodeID}
+                {sourceNode.nodeID}
 
                 <div className="DetailsLabel">State</div>
-                {nodeDetails.nodeState}
+                {sourceNode.nodeState}
 
                 <div className="DetailsLabel">City/Country</div>
-                {nodeDetails.nodeLocation}
+                {sourceNode.nodeLocation}
+                <br /><br />
 
                 <div id="connectedNode" style={{ overflow: "auto" }}>
                     {connectedNodes.map(connectedNode => {
-                        var connectedNodeDetail = this.state.ipop.findConnectedNodeDetails(nodeDetails.nodeID, connectedNode.id())
+                        var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
                         var connectedNodeBtn =
-                            <CollapseButton key={this.state.ipop.getNodeName(connectedNode.id()) + "Btn"} id={this.state.ipop.getNodeName(connectedNode.id()) + "Btn"} name={this.state.ipop.getNodeName(connectedNode.id())}>
+                            <CollapseButton key={ipop.getNodeName(connectedNode.id()) + "Btn"} id={ipop.getNodeName(connectedNode.id()) + "Btn"} name={ipop.getNodeName(connectedNode.id())}>
                                 <div className="DetailsLabel">Node ID</div>
                                 {connectedNode.id()}
                                 <div className="DetailsLabel">Tunnel ID</div>
@@ -282,30 +308,16 @@ class Graph extends React.Component {
         else {
             rightPanelContent = <div></div>
         }
+        document.getElementById("rightPanel").hidden = false;
         ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
-    handleSwitch = () => {
-        this.setState(prevState => {
-            return { switchToggle: !prevState.switchToggle }
-        })
-    }
-
-    createEdgeDetail = (element, linkDetails) => {
+    createEdgeDetail = (flag) => {
         var rightPanelContent;
-        if (linkDetails && element) {
-
-            var sourceNodeDetails;
-            var targetNodeDetails;
-
-            if (this.state.switchToggle) {
-                sourceNodeDetails = this.state.ipop.getNodeDetails(element.data().target);
-                targetNodeDetails = this.state.ipop.getNodeDetails(element.data().source);
-            } else {
-                sourceNodeDetails = this.state.ipop.getNodeDetails(element.data().source);
-                targetNodeDetails = this.state.ipop.getNodeDetails(element.data().target);
-            }
-
+        if (flag) {
+            var linkDetails = this.state.linkDetails.linkDetails;
+            var sourceNodeDetails = this.state.linkDetails.sourceNodeDetails;
+            var targetNodeDetails = this.state.linkDetails.targetNodeDetails;
             rightPanelContent = <div>
                 <h5>{linkDetails.InterfaceName}</h5>
 
@@ -367,6 +379,7 @@ class Graph extends React.Component {
                 {linkDetails.LocalAddress}
                 <div className="DetailsLabel">Latency</div>
                 {linkDetails.Latency}
+                <br /><br />
 
                 <Card.Body className="transmissionCard">
                     Sent
@@ -388,10 +401,111 @@ class Graph extends React.Component {
         else {
             rightPanelContent = <div></div>
         }
+        document.getElementById("rightPanel").hidden = false;
         ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
-    // toggle overlay right panel
+    handleSwitch = () => {
+        var that = this;
+        var promise = new Promise(function (resolve, reject) {
+            try {
+                that.setState(prevState => {
+                    return { switchToggle: !prevState.switchToggle }
+                })
+
+                resolve(true)
+            } catch{
+                reject(false)
+            }
+        })
+
+        promise.then(function () {
+            that.swap()
+        }).catch(function (e) {
+
+        });
+
+    }
+
+    swap = () => {
+        var that = this;
+        var linkDetails;
+        var promise = new Promise(function (resolve, reject) {
+            try {
+                if (that.state.switchToggle) {
+                    linkDetails = that.state.ipop.getLinkDetails(that.state.currentSelectedElement.data().target, that.state.currentSelectedElement.data().id);
+                } else {
+                    linkDetails = that.state.ipop.getLinkDetails(that.state.currentSelectedElement.data().source, that.state.currentSelectedElement.data().id);
+                }
+                resolve(linkDetails)
+            } catch (e) {
+                console.log(e)
+                reject(false)
+            }
+        })
+
+        promise.then(function (linkDetails) {
+            that.setState(prevState => {
+                return { linkDetails: { "linkDetails": linkDetails, "sourceNodeDetails": prevState.linkDetails.targetNodeDetails, "targetNodeDetails": prevState.linkDetails.sourceNodeDetails } }
+            })
+            console.log('switch')
+        }).catch(function (e) {
+            console.log(e)
+        })
+
+    }
+
+    /**
+	* Method called when click node elements on graph.
+	*
+	* @method eventClickNode
+    */
+    eventClickNode = (node) => {
+        var sourceNode = this.state.ipop.getNodeDetails(node.data('id'));
+        var connectedNodes = this.cy.elements(node.incomers().union(node.outgoers())).filter((ele) => {
+            return ele.isNode();
+        })
+        this.setState({
+            nodeDetails: {
+                'sourceNode': sourceNode, 'connectedNodes': connectedNodes,
+            }
+        })
+        if (this.state.graphType === 'main') {
+            this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
+            //this.createNodeDetail(true);
+            node.addClass('selected');
+        }
+        else {
+            this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
+            this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
+            this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
+            this.createNodeDetail(true);
+            node.addClass('selected');
+
+        }
+    }
+
+    /**
+	* Method called when click edge elements on graph.
+	*
+	* @method eventClickEdge
+    */
+    eventClickEdge = (edge) => {
+        var [linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails]
+            = [this.state.ipop.getLinkDetails(edge.data('source'), edge.data('id')), edge.data('source'), edge.data('target'), this.state.ipop.getNodeDetails(edge.data('target')), this.state.ipop.getNodeDetails(edge.data('source'))];
+        this.setState({ linkDetails: { linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails } })
+        if (this.state.graphType === 'main') {
+            this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent') /** style for test */
+            //this.createEdgeDetail(true);
+        }
+        else {
+            this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent');
+            this.cy.elements().difference(edge.connectedNodes()).not(edge).style('display', 'none');
+            this.createEdgeDetail(true);
+        }
+        edge.addClass('selected');
+    }
+
     togglePanel = () => {
         this.setState(prevState => {
             return { isShowRightPanel: !prevState.isShowRightPanel };
@@ -401,6 +515,62 @@ class Graph extends React.Component {
         } else {
             document.getElementById("rightPanel").hidden = false;
         }
+    }
+
+    renderGraph = () => {
+        ReactDOM.render(
+            <Cytoscape id="cy"
+                cy={(cy) => {
+                    this.cy = cy;
+                    var _this = this;
+
+                    this.cy.zoom(this.state.zoom)
+                    this.cy.center()
+
+                    this.cy.on('click', (event) => {
+                        if (event.target !== cy) {
+                            /** reset style */
+                            cy.elements().removeClass('transparent');
+                            cy.elements().removeClass('selected');
+                            var element = event.target;
+                            _this.handleClickCyElement(element.id());
+                            _this.setState({ currentSelectedElement: element })
+                            if (element.isNode()) {
+                                _this.eventClickNode(element);
+                            }
+                            else {
+                                _this.eventClickEdge(element);
+                            }
+
+                        }
+                        else {
+                            if (_this.state.graphType === 'main') {
+                                cy.elements().removeClass('transparent');
+                                cy.elements().removeClass('selected');
+                            }
+                            else {
+                                cy.elements().removeClass('selected');
+                            }
+                            _this.createNodeDetail(false);
+                            document.getElementById("rightPanel").hidden = true;
+                        }
+                    })
+
+                }}
+
+                elements={Cytoscape.normalizeElements({
+                    nodes: this.state.nodes,
+                    edges: this.state.links
+                })}
+
+                stylesheet={CytoscapeStyle}
+
+                style={{ width: window.innerWidth - 100, height: window.innerHeight }}
+
+                layout={{ name: "circle" }}
+
+            />
+            , document.getElementById('midArea'))
     }
 
     render() {
@@ -420,145 +590,13 @@ class Graph extends React.Component {
 
                     <section id="midArea" className="col-9">
 
-                        {/* Space for create graph */}
-                        {this.state.renderGraph ?
-                            (
-                                <Cytoscape id="cy"
-                                    cy={(cy) => {
-                                        this.cy = cy;
-                                        var _this = this;
-
-                                        this.cy.zoom(this.state.zoom)
-                                        this.cy.center()
-
-                                        /** Handle event click on elements */
-                                        this.cy.on('click', (event) => {
-                                            if (event.target !== cy) {
-                                                /** reset style */
-                                                cy.elements().removeClass('transparent');
-                                                cy.elements().removeClass('selected');
-                                                var element = event.target;
-                                                _this.handleClickCyElement(element.id());
-                                                if (_this.state.graphType === 'main') {
-                                                    // if (element.isNode()) {
-                                                    //     cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass('transparent'); /** Style for test */
-                                                    //     var neighborElement = cy.elements(element.incomers().union(element.outgoers()));
-                                                    //     var connectedNodes = neighborElement.filter((ele) => {
-                                                    //         return ele.isNode();
-                                                    //     })
-                                                    //     var nodeDetails = _this.state.ipop.getNodeDetails(event.target.id());
-                                                    //     _this.createNodeDetail(connectedNodes, nodeDetails);
-
-                                                    // }
-                                                    // else {
-                                                    //     cy.elements().difference(element.connectedNodes()).not(element).addClass('transparent'); /** Style for test */
-                                                    //     _this.createEdgeDetail(element, _this.state.ipop.getLinkDetails(element.data().source, element.data().id));
-                                                    // }
-                                                    element.addClass('selected');
-                                                }
-                                                else {
-                                                    if (element.isNode()) {
-                                                        /** Set clickable for connected elements */
-                                                        cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass('transparent');
-                                                        cy.elements(element.incomers().union(element.outgoers())).style('display','element')
-                                                        /** Set unclickable for not connected elements */
-                                                        cy.elements().difference(element.outgoers().union(element.incomers())).not(element).style('display','none');
-                                                        var neighborElement = cy.elements(element.incomers().union(element.outgoers()));
-                                                        var connectedNodes = neighborElement.filter((ele) => {
-                                                            return ele.isNode();
-                                                        })
-                                                        var nodeDetails = _this.state.ipop.getNodeDetails(event.target.id());
-                                                        _this.createNodeDetail(connectedNodes, nodeDetails);
-                                                    }
-                                                    else {
-                                                        cy.elements().difference(element.connectedNodes()).not(element).addClass('transparent');
-                                                        /** Set unclickable for not connected elements */
-                                                        cy.elements().difference(element.connectedNodes()).not(element).style('display','none')
-                                                        _this.createEdgeDetail(element, _this.state.ipop.getLinkDetails(element.data().source, element.data().id));
-                                                    }
-                                                    element.addClass('selected');
-
-                                                }
-
-                                            }
-                                            else {
-                                                /** Click other than nodes and edges */
-                                                if (_this.state.graphType === 'main') {
-                                                    cy.elements().removeClass('transparent');
-                                                    cy.elements().removeClass('selected');
-                                                }
-                                                else {
-                                                    cy.elements().removeClass('selected');
-                                                }
-                                                _this.createNodeDetail();
-                                            }
-                                        })
-
-                                    }}
-
-                                    elements={Cytoscape.normalizeElements({
-                                        nodes: this.state.nodes,
-                                        edges: this.state.links
-                                    })}
-
-                                    stylesheet={[
-                                        {
-                                            selector: 'node',
-                                            style: {
-                                                width: 36.37,
-                                                height: 36.37,
-                                                "background-color": "#9FC556",
-                                                "label": "data(label)",
-                                                "text-valign": "center",
-                                                "text-outline-color": "#9FC556",
-                                                "text-outline-width": "5%",
-                                                "text-outline-opacity": "1"
-                                            }
-
-                                        }, {
-                                            selector: "node.selected",
-                                            style: {
-                                                width: 36.37,
-                                                height: 36.37,
-                                                "border-width": "50%",
-                                                "border-color": "white",
-                                                "border-opacity": "0.2",
-                                                "background-color": "#9FC556"
-                                            }
-                                        },
-                                        {
-                                            selector: 'edge',
-                                            style: {
-                                                'curve-style': 'haystack',
-                                                "line-color": "#56C5BC",
-                                            }
-                                        }, {
-                                            selector: "edge.selected",
-                                            style: {
-                                                "line-color": "white",
-                                            }
-                                        }, {
-                                            selector: 'node.transparent',
-                                            style: {
-                                                'opacity': '0.1',
-                                            }
-                                        },
-                                        {
-                                            selector: 'edge.transparent',
-                                            style: {
-                                                'opacity': '0.1',
-                                            }
-                                        },
-                                    ]}
-
-                                    //style={{ width: window.innerWidth, height: window.innerHeight }}
-
-                                    layout={{ name: "circle" }}
-
-                                />
-                            )
+                        {this.state.renderGraph ? (
+                            <></>
+                        )
                             :
-                            (<h1>Loading...</h1>)}
+                            (
+                                <div className="loader">Loading...</div>
+                            )}
 
                     </section>
 
