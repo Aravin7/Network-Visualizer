@@ -53,13 +53,10 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			links: {},
 			targetId: ``,
 		};
+		this.toolProperty = {
+			multiWindowState: false, /** Default state */
+		}
 		this.cyElement = {};
-
-		// this.element.addEventListener('page-title-updated', (event) => {
-		//     //_this.updateTitle(_this.title + ': ' + event.title);
-		// 	//console.log('page-title-updated:' + event.title);
-		// 	_this.updateTitle(_this.title + ': ' + event.message);
-		// })
 
 		this.element.addEventListener('new-window', (event) => {
 			if (event.url.startsWith('http:') || event.url.startsWith('https:')) {
@@ -365,6 +362,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 					url: packet.url,
 					graphType: `main`,
 					paramsType: `graph`,
+					multiWindowState: this.toolProperty.multiWindowState,
 				}
 				if (!this.children.includes(packet.overlayId)) {
 					this.children.push(packet.overlayId);
@@ -402,6 +400,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.graphProperty.nodes = packet.nodes;
 			this.graphProperty.links = packet.links;
 			this.graphProperty.targetId = packet.targetId;
+			this.toolProperty.multiWindowState = packet.multiWindowState;
 		}
 		if (packet.hasOwnProperty('url')) {
 			this.element.src = packet.url;
@@ -450,6 +449,35 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
+	setMultiWindowState: function (state) {
+		this.toolProperty.multiWindowState = state;
+		//console.log(this.toolProperty.multiWindowState);
+		if (this.appName === 'Tool') {
+			if (Array.isArray(this.children) && this.children.length) {
+				var packet = {
+					nameOfComponent: `graphComponent`,
+					callback: `responseToolProperty`,
+					toolProperty: this.toolProperty,
+				}
+				this.sendDataToChildrenApps(`requestMultiState`, packet);
+				//this.callFunctionInComponent(packet.nameOfComponent, packet.callback, JSON.stringify(this.toolProperty));
+			}
+		}
+	},
+
+	request: function (packet) {
+		this[`request${packet.func}`](packet.data);
+	},
+
+	requestMultiState: function (packet) {
+		if (packet.hasOwnProperty('toolProperty')) {
+			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, JSON.stringify(packet.toolProperty));
+		}
+		else {
+			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, JSON.stringify(this.toolProperty));
+		}
+	},
+
 	sendDataToSearch: function (packet) {
 		if (this.appName === 'search') {
 			this.callFunctionInComponent(packet.nameOfComponent,
@@ -491,7 +519,29 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);
 	},
 
-	removeMainGraph: function(overlayId){
+	// changeElementFromSubToMain : function(packet){
+	// 	console.log('CHANGE...')
+	// 	if(this.graphProperty.graphType === 'main' && this.graphProperty.overlayId === packet.overlayId){
+	// 		var index = this.children.indexOf(packet.oldTargetId);
+	// 		console.log(`oleTargetId: ${packet.oldTargetId}, newTargetId: ${packet.newTargetId}`);
+	// 		if( ~index ){
+	// 			this.children.splice(index, 1);
+	// 			this.children.push(packet.newTargetId);
+	// 			var message = {
+	// 				nameOfComponent: `graphComponent`,
+	// 				callback: `handleSelectCyElement`,
+	// 				targetId: packet.newTargetId,
+	// 			}
+	// 			console.log('SELECTED...')
+	// 			this.selectCyElement(message);
+	// 		}
+	// 	}
+	// 	else{
+	// 		this.sendDataToParentApp(`changeElementFromSubToMain`, packet);
+	// 	}
+	// },
+
+	removeMainGraph: function (overlayId) {
 		var index = this.children.indexOf(overlayId);
 		if (index !== -1) this.children.splice(index, 1);
 		if (this.children.includes('search')) {
@@ -507,23 +557,23 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
-	removeSubGraph: function(packet){
-		if(this.graphProperty.overlayId === packet.overlayId){
+	removeSubGraph: function (packet) {
+		if (this.graphProperty.overlayId === packet.overlayId) {
 			var index = this.children.indexOf(packet.targetId);
-		if (index !== -1) this.children.splice(index, 1);
+			if (index !== -1) this.children.splice(index, 1);
 		}
 	},
 
-	handleCloseGraph: function(){
-		if(this.graphProperty.graphType === 'main'){
-			this.sendDataToParentApp('removeMainGraph',this.graphProperty.overlayId);
+	handleCloseGraph: function () {
+		if (this.graphProperty.graphType === 'main') {
+			this.sendDataToParentApp('removeMainGraph', this.graphProperty.overlayId);
 		}
-		else if(this.graphProperty.graphType === 'sub'){
+		else if (this.graphProperty.graphType === 'sub') {
 			let packet = {
 				overlayId: this.graphProperty.overlayId,
 				targetId: this.graphProperty.targetId
 			}
-			this.sendDataToParentApp('removeSubGraph',packet);
+			this.sendDataToParentApp('removeSubGraph', packet);
 		}
 	},
 

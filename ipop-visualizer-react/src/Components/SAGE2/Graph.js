@@ -22,6 +22,8 @@ class Graph extends React.Component {
             , linkDetails: null
             , currentSelectedElement: null
             , graphType: null
+            , multiWindowState: false
+            , targetId: null
             , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
         };
         window.graphComponent = this;
@@ -56,16 +58,17 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
-        document.getElementById("rightPanel").hidden = true;
+        this.toggleRightPanel(true);
         //this.fetchData();
+        this.requestToolProperty();
         this.requestGraphProperty();
     }
 
-    componentDidUpdate() {
-        if ((this.state.linkDetails !== null) && (this.state.graphType === 'sub')) {
-            this.createEdgeDetail(true);
-        }
-    }
+    // componentDidUpdate(prevProps, prevState) {
+    //     if ((this.state.linkDetails !== null) && (prevState.linkDetails !== this.state.linkDetails)) {
+    //         this.createEdgeDetail(true);
+    //     }
+    // }
 
     requestGraphProperty = () => {
         let packet = {
@@ -88,20 +91,56 @@ class Graph extends React.Component {
         }
         else {
             this.createSubGraph(packet).then((value) => {
-                this.setState({ renderGraph: value });
+                this.setState({ renderGraph: true, targetId: packet.targetId });
                 this.renderGraph();
             }).then(() => {
                 if (packet.targetId) {
                     this.handleSelectCyElement(packet.targetId);
                 }
             })
-            .catch((e) => {
-                console.log(e);
-            });
+                .catch((e) => {
+                    console.log(`Error Message: ${e}`);
+                });
         }
         this.setState({ graphType: packet.graphType });
     }
 
+    /**
+     * Method call for get Tool property data (mulitiState, etc.) from SAGE2 application.
+     * 
+     * @method requestToolProperty
+     */
+    requestToolProperty = () => {
+        var packet = {
+            func: `MultiState`,
+            data: {
+                nameOfComponent: `graphComponent`,
+                callback: `responseToolProperty`,
+            }
+        }
+        window.SAGE2_AppState.callFunctionInContainer(`request`, packet);
+
+    }
+
+    /**
+     * Method for call back when SAGE2 send Tool property data (multiState, etc.)
+     * 
+     * @method responseToolProperty
+     */
+    responseToolProperty = (packet) => {
+        packet = JSON.parse(packet);
+        this.setState({ multiWindowState: packet.multiWindowState }, () => {
+            if (this.state.graphType === 'main' && this.state.currentSelectedElement) {
+                this.handleSelectCyElement(this.state.currentSelectedElement.id());
+            }
+        })
+    }
+
+    /**
+     * Method create sub graph from window which is sub graph type.
+     * 
+     * @method createSubGraph
+     */
     createSubGraph = (packet) => {
         return new Promise((resolve, reject) => {
             try {
@@ -173,7 +212,6 @@ class Graph extends React.Component {
         var linkList = [];
         var ipop = new CreateGraphContents();
 
-        /** Old version */
         fetch(nodeURL)
             .then(res => res.json())
             .then(nodes =>
@@ -202,32 +240,39 @@ class Graph extends React.Component {
                         }
                         )
                     }
-                    ).then(res => {
+                    ).then(() => {
                         this.setState({ renderGraph: true });
                         this.renderGraph();
-                    }).then(res => {
+                    }).then(() => {
                         this.setDataForSearch(this.cy.json());
                     })
             )
     }
 
-    /** click from inside */
+    /**
+     * Method handle selected element when action is from inside.
+     * 
+     * @method handleClickCyElement
+     */
     handleClickCyElement = (id) => {
-        //console.log(`selected:${id}`);
         switch (this.state.graphType) {
             case 'main':
-                let packet = {
+                var packet = {
                     url: 'http://150.29.149.79:3000/graph', /** IP for React client server */
                     targetId: id,
                     overlayId: this.state.selectedOverlay,
                     type: 'subGraph',
                 }
-                window.SAGE2_AppState.callFunctionInContainer('openGraph', packet);
+                if (this.state.multiWindowState) { window.SAGE2_AppState.callFunctionInContainer('openGraph', packet) };
                 break;
         }
     }
 
-    /** select from outside */
+    /**
+     * Method handle selected element when action is from outside (like from main graph.).
+     * 
+     * @method handleSelectCyElement
+     */
     handleSelectCyElement = (id) => {
         var element = this.cy.elements(`#${id}`);
         element.select();
@@ -254,7 +299,7 @@ class Graph extends React.Component {
                 {sourceNode.nodeLocation}
                 <br /><br />
 
-                <div id="connectedNode" style={{ overflow: "auto" }}>
+                <div id="connectedNode">
                     {connectedNodes.map(connectedNode => {
                         var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
                         var connectedNodeBtn =
@@ -304,11 +349,12 @@ class Graph extends React.Component {
                 </div>
 
             </div>
+            this.toggleRightPanel(false);
         }
         else {
             rightPanelContent = <div></div>
+            this.toggleRightPanel(true);
         }
-        document.getElementById("rightPanel").hidden = false;
         ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
@@ -397,11 +443,12 @@ class Graph extends React.Component {
                     {linkDetails.Stats[0].recv_total_bytes}
                 </Card.Body>
             </div>
+            this.toggleRightPanel(false);
         }
         else {
             rightPanelContent = <div></div>
+            this.toggleRightPanel(true);
         }
-        document.getElementById("rightPanel").hidden = false;
         ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
@@ -447,8 +494,9 @@ class Graph extends React.Component {
         promise.then(function (linkDetails) {
             that.setState(prevState => {
                 return { linkDetails: { "linkDetails": linkDetails, "sourceNodeDetails": prevState.linkDetails.targetNodeDetails, "targetNodeDetails": prevState.linkDetails.sourceNodeDetails } }
+            }, () => {
+                that.createEdgeDetail(true);
             })
-            console.log('switch')
         }).catch(function (e) {
             console.log(e)
         })
@@ -472,17 +520,17 @@ class Graph extends React.Component {
         })
         if (this.state.graphType === 'main') {
             this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
-            //this.createNodeDetail(true);
-            node.addClass('selected');
+            if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
+            else this.createNodeDetail(false);
         }
         else {
             this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
             this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
             this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
             this.createNodeDetail(true);
-            node.addClass('selected');
 
         }
+        node.addClass('selected');
     }
 
     /**
@@ -496,7 +544,8 @@ class Graph extends React.Component {
         this.setState({ linkDetails: { linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails } })
         if (this.state.graphType === 'main') {
             this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent') /** style for test */
-            //this.createEdgeDetail(true);
+            if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
+            else this.createEdgeDetail(false);
         }
         else {
             this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent');
@@ -506,14 +555,24 @@ class Graph extends React.Component {
         edge.addClass('selected');
     }
 
-    togglePanel = () => {
-        this.setState(prevState => {
-            return { isShowRightPanel: !prevState.isShowRightPanel };
-        })
-        if (this.state.isShowRightPanel) {
-            document.getElementById("rightPanel").hidden = true;
-        } else {
-            document.getElementById("rightPanel").hidden = false;
+
+    /**
+     * Method for toggle detail panel in the right page.
+     * 
+     * @method toggleRightPanel
+     */
+    toggleRightPanel = (flag) => {
+        if (typeof flag === 'object' && flag !== null) {
+            this.setState(prevState => {
+                return { isShowRightPanel: !prevState.isShowRightPanel };
+            }, () => {
+                document.getElementById("rightPanel").hidden = this.state.isShowRightPanel;
+            })
+        }
+        else {
+            this.setState({ isShowRightPanel: flag }, () => {
+                document.getElementById("rightPanel").hidden = this.state.isShowRightPanel;
+            })
         }
     }
 
@@ -533,7 +592,7 @@ class Graph extends React.Component {
                             cy.elements().removeClass('transparent');
                             cy.elements().removeClass('selected');
                             var element = event.target;
-                            _this.handleClickCyElement(element.id());
+                            _this.handleClickCyElement(element.id()); /** for open sub graph */
                             _this.setState({ currentSelectedElement: element })
                             if (element.isNode()) {
                                 _this.eventClickNode(element);
@@ -552,7 +611,6 @@ class Graph extends React.Component {
                                 cy.elements().removeClass('selected');
                             }
                             _this.createNodeDetail(false);
-                            document.getElementById("rightPanel").hidden = true;
                         }
                     })
 
@@ -600,7 +658,7 @@ class Graph extends React.Component {
 
                     </section>
 
-                    <button onClick={this.togglePanel} id="overlayRightPanelBtn" />
+                    <button onClick={this.toggleRightPanel} id="overlayRightPanelBtn" />
                     <RightPanel rightPanelTopic='Details'></RightPanel>
 
 
