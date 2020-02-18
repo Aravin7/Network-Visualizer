@@ -45,6 +45,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		//
 		this.children = new Array();
 		this.appName = ``;
+		this.appId = ``;
 		this.graphProperty = {
 			overlayId: ``,
 			graphType: ``,
@@ -95,6 +96,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		} else {
 			this.element.src = 'http://150.29.149.79:3000/'; /* IP for React client server*/
 			this.appName = 'Tool';
+			this.appId = '0';
 			this.updateTitle(`${this.title}: ${this.appName}`);
 		}
 	},
@@ -363,6 +365,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 					graphType: `main`,
 					paramsType: `graph`,
 					multiWindowState: this.toolProperty.multiWindowState,
+					appId: packet.overlayId,
 				}
 				if (!this.children.includes(packet.overlayId)) {
 					this.children.push(packet.overlayId);
@@ -371,7 +374,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				break;
 			case 'subGraph':
 				let messageSub = {
-					appName: `sub_${this.graphProperty.overlayId}`,
+					appName: `${packet.targetLabel}`,
 					url: packet.url,
 					overlayId: this.graphProperty.overlayId,
 					graphType: `sub`,
@@ -379,6 +382,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 					nodes: this.graphProperty.nodes,
 					links: this.graphProperty.links,
 					targetId: packet.targetId,
+					appId: packet.targetId,
 				}
 				if (!this.children.includes(packet.targetId)) {
 					this.children.push(packet.targetId);
@@ -401,6 +405,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.graphProperty.links = packet.links;
 			this.graphProperty.targetId = packet.targetId;
 			this.toolProperty.multiWindowState = packet.multiWindowState;
+			this.appId = packet.appId;
 		}
 		if (packet.hasOwnProperty('url')) {
 			this.element.src = packet.url;
@@ -465,6 +470,38 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
+	setSelectedFromSub: function (packet) {
+		if (this.children.includes(packet.oldTargetId)) {
+			var promise = new Promise((resolve, reject) => {
+				try {
+					var index = this.children.indexOf(packet.oldTargetId);
+					if (index !== -1) this.children.splice(index, 1);
+					resolve(packet.newTargetId);
+				} catch (e) {
+					reject(e);
+				}
+			})
+
+			promise.then((value) => {
+				this.children.push(value);
+				var packet = {
+					nameOfComponent: `graphComponent`,
+					callback: `handleSelectCyElement`,
+					targetId: value,
+				}
+				this.selectCyElement(packet);
+			}).catch((e) => {
+				console.log(e.message)
+			})
+		} else {
+			if(this.appId === packet.oldTargetId){
+				this.updateTitle(`${this.title}: ${packet.newTargetLabel}`);
+				this.appId = packet.newTargetId;
+			}
+			this.sendDataToParentApp(`setSelectedFromSub`, packet);
+		}
+	},
+
 	request: function (packet) {
 		this[`request${packet.func}`](packet.data);
 	},
@@ -518,28 +555,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	selectCyElement: function (packet) {
 		this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);
 	},
-
-	// changeElementFromSubToMain : function(packet){
-	// 	console.log('CHANGE...')
-	// 	if(this.graphProperty.graphType === 'main' && this.graphProperty.overlayId === packet.overlayId){
-	// 		var index = this.children.indexOf(packet.oldTargetId);
-	// 		console.log(`oleTargetId: ${packet.oldTargetId}, newTargetId: ${packet.newTargetId}`);
-	// 		if( ~index ){
-	// 			this.children.splice(index, 1);
-	// 			this.children.push(packet.newTargetId);
-	// 			var message = {
-	// 				nameOfComponent: `graphComponent`,
-	// 				callback: `handleSelectCyElement`,
-	// 				targetId: packet.newTargetId,
-	// 			}
-	// 			console.log('SELECTED...')
-	// 			this.selectCyElement(message);
-	// 		}
-	// 	}
-	// 	else{
-	// 		this.sendDataToParentApp(`changeElementFromSubToMain`, packet);
-	// 	}
-	// },
 
 	removeMainGraph: function (overlayId) {
 		var index = this.children.indexOf(overlayId);

@@ -27,7 +27,8 @@ var CytoscapeStyle = [
         selector: 'edge',
         style: {
             'curve-style': 'haystack',
-            "line-color": "#56C5BC",
+            //"line-color": "#56C5BC",
+            "line-color": `data(color)`,
         }
     }, {
         selector: "edge.selected",

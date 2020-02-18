@@ -9,6 +9,7 @@ import CollapseButton from "./CollapseButton";
 import Card from "react-bootstrap/Card";
 import RightPanel from "./RightPanel";
 import CytoscapeStyle from './CytoscapeStyle';
+import { nullLiteral } from "@babel/types";
 
 class Graph extends React.Component {
     constructor(props) {
@@ -149,15 +150,30 @@ class Graph extends React.Component {
                 var linkList = [];
                 ipop.init(this.state.selectedOverlay, packet.nodes, packet.links);
                 this.setState({ ipop: ipop });
-                Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).forEach(node => {
+                Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
                     var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}"}}`
                     var linkIds = Object.keys(packet.links[this.state.selectedOverlay]['current_state'][node]);
 
                     linkIds.forEach(linkIds => {
                         var source = packet.links[this.state.selectedOverlay]['current_state'][node][linkIds]["SrcNodeId"];
                         var target = packet.links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
+                        var colorCode;
+                                switch(ipop.getLinkDetails(source, linkIds).TunnelType){
+                                    case 'CETypeILongDistance':
+                                    colorCode = '#5E4FA2';
+                                    break;
+                                    case 'CETypeLongDistance':
+                                    colorCode = '#5E4FA2';
+                                    break;
+                                    case 'CETypePredecessor':
+                                    colorCode = '#01665E';
+                                    break;
+                                    case 'CETypeSuccessor':
+                                    colorCode = '#01665E';
+                                    break;
+                                }
                         if (Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
-                            var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}" } }`;
+                            var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}", "color":"${colorCode}" } }`;
                             linkList.push(JSON.parse(linkJSON));
                         }
                     })
@@ -220,16 +236,30 @@ class Graph extends React.Component {
                     .then(links => {
                         ipop.init(this.state.selectedOverlay, nodes, links);
                         this.setState({ ipop: ipop });
-                        Object.keys(nodes[this.state.selectedOverlay]['current_state']).forEach(node => {
+                        Object.keys(nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
                             var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
                             var linkIds = Object.keys(links[this.state.selectedOverlay]['current_state'][node]);
 
                             linkIds.forEach(linkIds => {
                                 var source = links[this.state.selectedOverlay]['current_state'][node][linkIds]["SrcNodeId"];
                                 var target = links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
-
+                                var colorCode;
+                                switch(ipop.getLinkDetails(source, linkIds).TunnelType){
+                                    case 'CETypeILongDistance':
+                                    colorCode = '#5E4FA2';
+                                    break;
+                                    case 'CETypeLongDistance':
+                                    colorCode = '#5E4FA2';
+                                    break;
+                                    case 'CETypePredecessor':
+                                    colorCode = '#01665E';
+                                    break;
+                                    case 'CETypeSuccessor':
+                                    colorCode = '#01665E';
+                                    break;
+                                }
                                 if (Object.keys(nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
-                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}" } }`;
+                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}", "color":"${colorCode}" } }`;
                                     linkList.push(JSON.parse(linkJSON));
                                 }
                                 this.setState({ links: linkList });
@@ -260,10 +290,28 @@ class Graph extends React.Component {
                 var packet = {
                     url: 'http://150.29.149.79:3000/graph', /** IP for React client server */
                     targetId: id,
+                    targetLabel: this.state.currentSelectedElement.data('label'),
                     overlayId: this.state.selectedOverlay,
                     type: 'subGraph',
                 }
                 if (this.state.multiWindowState) { window.SAGE2_AppState.callFunctionInContainer('openGraph', packet) };
+                break;
+            case 'sub':
+                if (this.state.currentSelectedElement) {
+                    var packet = {
+                        name: `SelectedFromSub`,
+                        data: {
+                            oldTargetId: this.state.targetId,
+                            newTargetId: this.state.currentSelectedElement.id(),
+                            newTargetLabel: this.state.currentSelectedElement.data('label'),
+                        }
+                    }
+                    this.setState(prevState => {
+                        return { targetId: prevState.currentSelectedElement.id() }
+                    }, () => {
+                        window.SAGE2_AppState.callFunctionInContainer('set', packet);
+                    })
+                }
                 break;
         }
     }
@@ -274,9 +322,14 @@ class Graph extends React.Component {
      * @method handleSelectCyElement
      */
     handleSelectCyElement = (id) => {
+        try{
         var element = this.cy.elements(`#${id}`);
         element.select();
         element.trigger('click');
+        }
+        catch(e){
+            console.log('Cytoscape Not Ready...');
+        }
     }
 
     createNodeDetail = (flag) => {
@@ -592,8 +645,9 @@ class Graph extends React.Component {
                             cy.elements().removeClass('transparent');
                             cy.elements().removeClass('selected');
                             var element = event.target;
-                            _this.handleClickCyElement(element.id()); /** for open sub graph */
-                            _this.setState({ currentSelectedElement: element })
+                            _this.setState({ currentSelectedElement: element }, () => {
+                                _this.handleClickCyElement(element.id()); /** for open sub graph */
+                            })
                             if (element.isNode()) {
                                 _this.eventClickNode(element);
                             }
@@ -610,6 +664,12 @@ class Graph extends React.Component {
                             else {
                                 cy.elements().removeClass('selected');
                             }
+                            _this.setState(prevState => {
+                                console.log('set current element to null');
+                                return {
+                                    currentSelectedElement: null,
+                                }
+                            })
                             _this.createNodeDetail(false);
                         }
                     })

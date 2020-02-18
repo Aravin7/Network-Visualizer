@@ -37,7 +37,7 @@ class CreateGraphContents {
         }
 
         this.getNodeIDs = function () {
-            return Object.keys(this.getNodeObj());
+            return Object.keys(this.getNodeObj()).sort();
         }
 
         this.getNodeName = function (nodeID) {

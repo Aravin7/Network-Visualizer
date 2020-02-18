@@ -59,36 +59,10 @@ class Overlay extends React.Component {
         return (
             <>
                 <div id="container" className="container-fluid">
-                    {/* <header className="row">
-                        <img src={ipop_ic} alt="ipop_ic" />
-
-                        <div id="ipopTitle" className="col-3">
-                            <h6>IPOP NETWORK VISUALIZER</h6>
-                        </div>
-
-                        <div className="col-6" style={{ textAlign: "center" }}>
-                            <select hidden id="viewSelector">
-                                <option value="Topology">Topology</option>
-                            </select>
-                        </div>
-
-                        <div className="col">
-                            <input hidden id="search" type="search" placeholder="search"></input>
-                        </div>
-                    </header> */}
-
                     <div id="mainContent" className="row" style={{ backgroundColor: "#101B2B", color: "white" }}>
-
                         <section id="midArea" className="col-10">
                             {this.renderOverlays()}
                         </section>
-
-                        {/* <section id="rightPanel" className="col">
-                            <h6>Overlays</h6>
-                            <input id="search" type="search" placeholder="search"></input>
-                            {this.renderOverlayBtn()}
-                        </section> */}
-
                     </div>
 
                 </div>
