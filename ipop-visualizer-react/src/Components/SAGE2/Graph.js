@@ -704,22 +704,22 @@ class Graph extends React.Component {
                     }
                 })
                 promise.then( (value) => {
-                    if(value){
-                        var currentPan = this.cy.pan();
-                        this.cy.pan({
-                            x:currentPan.x - (document.getElementById('rightPanel').offsetWidth/2),
-                            y: currentPan.y
-                        })
-                        console.log(this.cy.pan());
-                    }
-                    else{
-                        var currentPan = this.cy.pan();
-                        this.cy.pan({
-                            x:currentPan.x * 2,
-                            y: currentPan.y
-                        })
-                        console.log(this.cy.pan());
-                    }
+                    // if(value){
+                    //     var currentPan = this.cy.pan();
+                    //     this.cy.pan({
+                    //         x:currentPan.x - (document.getElementById('rightPanel').offsetWidth/2),
+                    //         y: currentPan.y
+                    //     })
+                    //     console.log(this.cy.pan());
+                    // }
+                    // else{
+                    //     var currentPan = this.cy.pan();
+                    //     this.cy.pan({
+                    //         x:currentPan.x * 2,
+                    //         y: currentPan.y
+                    //     })
+                    //     console.log(this.cy.pan());
+                    // }
                 }).catch( (e) => {
                     console.log(e.message);
                 })
