@@ -4,7 +4,7 @@ import React from "react";
 class RightPanel extends React.Component {
     render() {
         return <section id="rightPanel">
-            <h6>{this.props.rightPanelTopic}</h6>
+            <h1>{this.props.rightPanelTopic}</h1>
             <div id="rightPanelContent">{this.props.children}</div>
         </section>
     }

@@ -15,8 +15,8 @@ class Graph extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            nodes: [], links: [], minZoom: 0.2
-            , maxZoom: 2, zoom: 1
+            nodes: [], links: [], initMinZoom: 0.2
+            , initMaxZoom: 2
             , switchToggle: false
             , isShowRightPanel: false
             , nodeDetails: null
@@ -25,52 +25,53 @@ class Graph extends React.Component {
             , graphType: null
             , multiWindowState: false
             , targetId: null
-            , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
+            , selectedOverlay: '101000F', graphType: 'main' /** For React test */
         };
         window.graphComponent = this;
     }
 
     zoomIn = () => {
-        if (this.state.zoom < this.state.maxZoom) {
-            this.setState(prevState => {
-                return { zoom: prevState.zoom + 0.1 }
-            })
+        try {
+            var currentZoom = this.cy.zoom();
+            this.cy.zoom(currentZoom + 0.1);
+            document.getElementById('zoomSlider').value = (this.cy.zoom());
+        }
+        catch (e) {
+            console.log('Cytoscape is not ready...');
         }
     }
 
     zoomOut = () => {
-        if (this.state.zoom > this.state.minZoom) {
-            this.setState(prevState => {
-                return { zoom: prevState.zoom - 0.1 }
-            })
+        try {
+            var currentZoom = this.cy.zoom();
+            this.cy.zoom(currentZoom - 0.1);
+            document.getElementById('zoomSlider').value = (this.cy.zoom());
+        } catch (e) {
+            console.log('Cytoscape is not ready...');
         }
     }
 
-    handleZoomSlider = (e) => {
-        var newZoom = e.target.value;
-        this.setState(prevState => {
-            if (prevState.zoom > newZoom) {
-                return { zoom: prevState.zoom - (this.state.zoom - newZoom) };
-            }
-            else if (prevState.zoom < newZoom) {
-                return { zoom: prevState.zoom + (newZoom - this.state.zoom) }
-            }
-        })
-    }
-
     componentDidMount() {
+        this.fetchData();
         this.toggleRightPanel(true);
-        //this.fetchData();
-        this.requestToolProperty();
-        this.requestGraphProperty();
+        //this.requestGraphProperty();
+        //this.requestToolProperty();
     }
 
-    // componentDidUpdate(prevProps, prevState) {
-    //     if ((this.state.linkDetails !== null) && (prevState.linkDetails !== this.state.linkDetails)) {
-    //         this.createEdgeDetail(true);
-    //     }
-    // }
+    /**
+     * Section of method `request` && `respone` method for cummunicate SAGE2.
+     * Includes >
+     * @method requestGraphProperty
+     * @method responseGraphProperty
+     * @method requestToolProperty
+     * @method responseToolProperty
+     */
 
+    /**
+     * Method to reqest graph property from SAGE2.
+     * 
+     * @method requestGraphProperty
+     */
     requestGraphProperty = () => {
         let packet = {
             nameOfComponent: `graphComponent`,
@@ -79,6 +80,11 @@ class Graph extends React.Component {
         window.SAGE2_AppState.callFunctionInContainer(`requestGraphProperty`, packet);
     }
 
+    /**
+     * Method callback to get graph property from SAGE2.
+     * 
+     * @method responseGraphProperty
+     */
     responseGraphProperty = (packet) => {
         packet = JSON.parse(packet);
         this.setState({ selectedOverlay: packet.overlayId, graphType: packet.graphType });
@@ -138,6 +144,18 @@ class Graph extends React.Component {
     }
 
     /**
+     * End section of method `request` && `respone`.
+     */
+
+    /**
+     * Section of method `create`.
+     * Includes >
+     * @method createSubGraph
+     * @method createEdgeDetail
+     * @method createNodeDetail
+     */
+
+    /**
      * Method create sub graph from window which is sub graph type.
      * 
      * @method createSubGraph
@@ -158,20 +176,20 @@ class Graph extends React.Component {
                         var source = packet.links[this.state.selectedOverlay]['current_state'][node][linkIds]["SrcNodeId"];
                         var target = packet.links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
                         var colorCode;
-                                switch(ipop.getLinkDetails(source, linkIds).TunnelType){
-                                    case 'CETypeILongDistance':
-                                    colorCode = '#5E4FA2';
-                                    break;
-                                    case 'CETypeLongDistance':
-                                    colorCode = '#5E4FA2';
-                                    break;
-                                    case 'CETypePredecessor':
-                                    colorCode = '#01665E';
-                                    break;
-                                    case 'CETypeSuccessor':
-                                    colorCode = '#01665E';
-                                    break;
-                                }
+                        switch (ipop.getLinkDetails(source, linkIds).TunnelType) {
+                            case 'CETypeILongDistance':
+                                colorCode = '#5E4FA2';
+                                break;
+                            case 'CETypeLongDistance':
+                                colorCode = '#5E4FA2';
+                                break;
+                            case 'CETypePredecessor':
+                                colorCode = '#01665E';
+                                break;
+                            case 'CETypeSuccessor':
+                                colorCode = '#01665E';
+                                break;
+                        }
                         if (Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
                             var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}", "color":"${colorCode}" } }`;
                             linkList.push(JSON.parse(linkJSON));
@@ -190,157 +208,20 @@ class Graph extends React.Component {
         })
     }
 
-    setOverlayElements = (nodes, links) => {
-        let packet = {
-            name: `OverlayElements`,
-            data: {
-                nodes,
-                links,
-            },
-        }
-        window.SAGE2_AppState.callFunctionInContainer(`set`, packet);
-    }
-
-    setDataForSearch = (element) => {
-        let packet = {
-            name: 'DataForSearch',
-            data: {
-                element
-            },
-        }
-        window.SAGE2_AppState.callFunctionInContainer(`set`, packet);
-    }
-
     /**
-     * Method for get IPOP data from IPOP server.
+     * Method to create node detail in right panel.
      * 
-     * @method fetchData
+     * @method createNodeDetail
      */
-    fetchData = () => {
-        var intervalNo = new Date().toISOString().split(".")[0];
-        var serverIP = '18.220.44.57:5000';
-        var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
-
-        var nodeURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/nodes?interval=" + intervalNo + "&current_state=True";
-        var linkURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/links?interval=" + intervalNo + "&current_state=True";
-
-        var nodeList = [];
-        var linkList = [];
-        var ipop = new CreateGraphContents();
-
-        fetch(nodeURL)
-            .then(res => res.json())
-            .then(nodes =>
-                fetch(linkURL)
-                    .then(res => res.json())
-                    .then(links => {
-                        ipop.init(this.state.selectedOverlay, nodes, links);
-                        this.setState({ ipop: ipop });
-                        Object.keys(nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
-                            var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
-                            var linkIds = Object.keys(links[this.state.selectedOverlay]['current_state'][node]);
-
-                            linkIds.forEach(linkIds => {
-                                var source = links[this.state.selectedOverlay]['current_state'][node][linkIds]["SrcNodeId"];
-                                var target = links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
-                                var colorCode;
-                                switch(ipop.getLinkDetails(source, linkIds).TunnelType){
-                                    case 'CETypeILongDistance':
-                                    colorCode = '#5E4FA2';
-                                    break;
-                                    case 'CETypeLongDistance':
-                                    colorCode = '#5E4FA2';
-                                    break;
-                                    case 'CETypePredecessor':
-                                    colorCode = '#01665E';
-                                    break;
-                                    case 'CETypeSuccessor':
-                                    colorCode = '#01665E';
-                                    break;
-                                }
-                                if (Object.keys(nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
-                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}", "color":"${colorCode}" } }`;
-                                    linkList.push(JSON.parse(linkJSON));
-                                }
-                                this.setState({ links: linkList });
-                            });
-                            nodeList.push(JSON.parse(nodeJSON));
-                            this.setState({ nodes: nodeList })
-                            this.setOverlayElements(nodes, links);
-                        }
-                        )
-                    }
-                    ).then(() => {
-                        this.setState({ renderGraph: true });
-                        this.renderGraph();
-                    }).then(() => {
-                        this.setDataForSearch(this.cy.json());
-                    })
-            )
-    }
-
-    /**
-     * Method handle selected element when action is from inside.
-     * 
-     * @method handleClickCyElement
-     */
-    handleClickCyElement = (id) => {
-        switch (this.state.graphType) {
-            case 'main':
-                var packet = {
-                    url: 'http://150.29.149.79:3000/graph', /** IP for React client server */
-                    targetId: id,
-                    targetLabel: this.state.currentSelectedElement.data('label'),
-                    overlayId: this.state.selectedOverlay,
-                    type: 'subGraph',
-                }
-                if (this.state.multiWindowState) { window.SAGE2_AppState.callFunctionInContainer('openGraph', packet) };
-                break;
-            case 'sub':
-                if (this.state.currentSelectedElement) {
-                    var packet = {
-                        name: `SelectedFromSub`,
-                        data: {
-                            oldTargetId: this.state.targetId,
-                            newTargetId: this.state.currentSelectedElement.id(),
-                            newTargetLabel: this.state.currentSelectedElement.data('label'),
-                        }
-                    }
-                    this.setState(prevState => {
-                        return { targetId: prevState.currentSelectedElement.id() }
-                    }, () => {
-                        window.SAGE2_AppState.callFunctionInContainer('set', packet);
-                    })
-                }
-                break;
-        }
-    }
-
-    /**
-     * Method handle selected element when action is from outside (like from main graph.).
-     * 
-     * @method handleSelectCyElement
-     */
-    handleSelectCyElement = (id) => {
-        try{
-        var element = this.cy.elements(`#${id}`);
-        element.select();
-        element.trigger('click');
-        }
-        catch(e){
-            console.log('Cytoscape Not Ready...');
-        }
-    }
-
     createNodeDetail = (flag) => {
         var rightPanelContent;
         if (flag) {
             var sourceNode = this.state.nodeDetails.sourceNode;
             var connectedNodes = this.state.nodeDetails.connectedNodes;
             var ipop = this.state.ipop;
-            rightPanelContent = <div>
+            rightPanelContent = <div id="elementDetail">
 
-                <h5>{sourceNode.nodeName}</h5>
+                <h2>{sourceNode.nodeName}</h2>
 
                 <div className="DetailsLabel">Node ID</div>
                 {sourceNode.nodeID}
@@ -411,6 +292,11 @@ class Graph extends React.Component {
         ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
+    /**
+     * Method to create edge detail in right panel.
+     * 
+     * @method createEdgeDetail
+     */
     createEdgeDetail = (flag) => {
         var rightPanelContent;
         if (flag) {
@@ -504,7 +390,182 @@ class Graph extends React.Component {
         }
         ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
+    /**
+     * End section of method `create`
+     */
 
+    setOverlayElements = (nodes, links) => {
+        let packet = {
+            name: `OverlayElements`,
+            data: {
+                nodes,
+                links,
+            },
+        }
+        window.SAGE2_AppState.callFunctionInContainer(`set`, packet);
+    }
+
+    setDataForSearch = (element) => {
+        let packet = {
+            name: 'DataForSearch',
+            data: {
+                element
+            },
+        }
+        window.SAGE2_AppState.callFunctionInContainer(`set`, packet);
+    }
+
+    /**
+     * Method for get IPOP data from IPOP server.
+     * 
+     * @method fetchData
+     */
+    fetchData = () => {
+        var intervalNo = new Date().toISOString().split(".")[0];
+        var serverIP = '18.220.44.57:5000';
+        var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
+
+        var nodeURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/nodes?interval=" + intervalNo + "&current_state=True";
+        var linkURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/links?interval=" + intervalNo + "&current_state=True";
+
+        var nodeList = [];
+        var linkList = [];
+        var ipop = new CreateGraphContents();
+
+        fetch(nodeURL)
+            .then(res => res.json())
+            .then(nodes =>
+                fetch(linkURL)
+                    .then(res => res.json())
+                    .then(links => {
+                        ipop.init(this.state.selectedOverlay, nodes, links);
+                        this.setState({ ipop: ipop });
+                        Object.keys(nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
+                            var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
+                            var linkIds = Object.keys(links[this.state.selectedOverlay]['current_state'][node]);
+
+                            linkIds.forEach(linkIds => {
+                                var source = links[this.state.selectedOverlay]['current_state'][node][linkIds]["SrcNodeId"];
+                                var target = links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
+                                var colorCode;
+                                switch (ipop.getLinkDetails(source, linkIds).TunnelType) {
+                                    case 'CETypeILongDistance':
+                                        colorCode = '#5E4FA2';
+                                        break;
+                                    case 'CETypeLongDistance':
+                                        colorCode = '#5E4FA2';
+                                        break;
+                                    case 'CETypePredecessor':
+                                        colorCode = '#01665E';
+                                        break;
+                                    case 'CETypeSuccessor':
+                                        colorCode = '#01665E';
+                                        break;
+                                }
+                                if (Object.keys(nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
+                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}", "color":"${colorCode}" } }`;
+                                    linkList.push(JSON.parse(linkJSON));
+                                }
+                                this.setState({ links: linkList });
+                            });
+                            nodeList.push(JSON.parse(nodeJSON));
+                            this.setState({ nodes: nodeList })
+                            this.setOverlayElements(nodes, links);
+                        }
+                        )
+
+                    }
+                    ).then(() => {
+                        this.setState({ renderGraph: true });
+                        this.renderGraph();
+                    }).then(() => {
+                        this.setDataForSearch(this.cy.json());
+                    })
+            )
+    }
+
+    /**
+     * Section of `handle` method.
+     * Includes >
+     * @method handleClickCyElement
+     * @method handleSelectCyElement
+     * @method handleSwitch
+     * @method handleZoomSlider
+     * @method handleMouseOverPage
+     */
+
+    /**
+     * Method handle selected element when action is from inside.
+     * 
+     * @method handleClickCyElement
+     */
+    handleClickCyElement = (id) => {
+        switch (this.state.graphType) {
+            case 'main':
+                var packet = {
+                    url: 'http://150.29.149.79:3000/graph', /** IP for React client server */
+                    targetId: id,
+                    targetLabel: this.state.currentSelectedElement.data('label'),
+                    overlayId: this.state.selectedOverlay,
+                    type: 'subGraph',
+                }
+                if (this.state.multiWindowState) { window.SAGE2_AppState.callFunctionInContainer('openGraph', packet) };
+                break;
+            case 'sub':
+                if (this.state.currentSelectedElement) {
+                    var packet = {
+                        name: `SelectedFromSub`,
+                        data: {
+                            oldTargetId: this.state.targetId,
+                            newTargetId: this.state.currentSelectedElement.id(),
+                            newTargetLabel: this.state.currentSelectedElement.data('label'),
+                        }
+                    }
+                    this.setState(prevState => {
+                        return { targetId: prevState.currentSelectedElement.id() }
+                    }, () => {
+                        window.SAGE2_AppState.callFunctionInContainer('set', packet);
+                    })
+                }
+                break;
+        }
+    }
+
+    /**
+     * Method handle selected element when action is from outside (like from main graph.).
+     * 
+     * @method handleSelectCyElement
+     */
+    handleSelectCyElement = (id) => {
+        try {
+            var element = this.cy.elements(`#${id}`);
+            element.select();
+            element.trigger('click');
+        }
+        catch (e) {
+            console.log('Cytoscape Not Ready...');
+        }
+    }
+
+    /**
+     * Method to handle slider zoom.
+     * 
+     * @method handleZoomSlider
+     */
+    handleZoomSlider = (e) => {
+        try {
+            this.cy.zoom(parseFloat(e.target.value));
+        } catch (e) {
+            console.log('Cytoscape is not ready...  ');
+
+        }
+    }
+
+    /**
+     * Method to handle switch button in right panel.
+     * 
+     * @method handleSwitch
+     */
     handleSwitch = () => {
         var that = this;
         var promise = new Promise(function (resolve, reject) {
@@ -512,20 +573,31 @@ class Graph extends React.Component {
                 that.setState(prevState => {
                     return { switchToggle: !prevState.switchToggle }
                 })
-
                 resolve(true)
             } catch{
                 reject(false)
             }
         })
-
         promise.then(function () {
             that.swap()
         }).catch(function (e) {
-
         });
-
     }
+
+    /**
+     * Mthod handle when mouse over on cytoscape.
+     * 
+     * @method handleMouseOverPage
+     */
+    handleMouseOverPage = (e) => {
+        if(this.state.graphType === 'sub' && this.state.currentSelectedElement)
+        this.handleClickCyElement(this.state.currentSelectedElement.id());
+        //console.log(`TargetId:${this.state.targetId}, CurrentElement:${this.state.currentSelectedElement.id()}`);
+    }
+
+    /**
+     * End section `handle` method.
+     */
 
     swap = () => {
         var that = this;
@@ -553,7 +625,6 @@ class Graph extends React.Component {
         }).catch(function (e) {
             console.log(e)
         })
-
     }
 
     /**
@@ -608,7 +679,6 @@ class Graph extends React.Component {
         edge.addClass('selected');
     }
 
-
     /**
      * Method for toggle detail panel in the right page.
      * 
@@ -624,7 +694,35 @@ class Graph extends React.Component {
         }
         else {
             this.setState({ isShowRightPanel: flag }, () => {
-                document.getElementById("rightPanel").hidden = this.state.isShowRightPanel;
+                var promise = new Promise( (resolve, reject) => {
+                    try{
+                        document.getElementById("rightPanel").hidden = this.state.isShowRightPanel;
+                        resolve(!this.state.isShowRightPanel && this.cy)
+                    }
+                    catch(e){
+                        reject(e);
+                    }
+                })
+                promise.then( (value) => {
+                    if(value){
+                        var currentPan = this.cy.pan();
+                        this.cy.pan({
+                            x:currentPan.x - (document.getElementById('rightPanel').offsetWidth/2),
+                            y: currentPan.y
+                        })
+                        console.log(this.cy.pan());
+                    }
+                    else{
+                        var currentPan = this.cy.pan();
+                        this.cy.pan({
+                            x:currentPan.x * 2,
+                            y: currentPan.y
+                        })
+                        console.log(this.cy.pan());
+                    }
+                }).catch( (e) => {
+                    console.log(e.message);
+                })
             })
         }
     }
@@ -635,10 +733,10 @@ class Graph extends React.Component {
                 cy={(cy) => {
                     this.cy = cy;
                     var _this = this;
-
-                    this.cy.zoom(this.state.zoom)
-                    this.cy.center()
-
+                    this.cy.maxZoom(this.state.initMaxZoom);
+                    this.cy.minZoom(this.state.initMinZoom);
+                    this.cy.zoom(0.8);
+                    this.cy.center();
                     this.cy.on('click', (event) => {
                         if (event.target !== cy) {
                             /** reset style */
@@ -654,7 +752,6 @@ class Graph extends React.Component {
                             else {
                                 _this.eventClickEdge(element);
                             }
-
                         }
                         else {
                             if (_this.state.graphType === 'main') {
@@ -665,7 +762,6 @@ class Graph extends React.Component {
                                 cy.elements().removeClass('selected');
                             }
                             _this.setState(prevState => {
-                                console.log('set current element to null');
                                 return {
                                     currentSelectedElement: null,
                                 }
@@ -673,20 +769,18 @@ class Graph extends React.Component {
                             _this.createNodeDetail(false);
                         }
                     })
-
+                    this.cy.on('mouseover', (event) => {
+                        event.preventDefault();
+                        _this.handleMouseOverPage();
+                    })
                 }}
-
                 elements={Cytoscape.normalizeElements({
                     nodes: this.state.nodes,
                     edges: this.state.links
                 })}
-
                 stylesheet={CytoscapeStyle}
-
-                style={{ width: window.innerWidth - 100, height: window.innerHeight }}
-
+                style={{ width: window.innerWidth, height: window.innerHeight }}
                 layout={{ name: "circle" }}
-
             />
             , document.getElementById('midArea'))
     }
@@ -695,33 +789,22 @@ class Graph extends React.Component {
         return <>
             <div id="container" className="container-fluid">
                 <div id="mainContent" className="row" style={{ backgroundColor: "#101B2B", color: "white" }}>
-
                     <div id="leftTools" className="col-1">
                         <button id="infoBtn"></button>
                         <button id="configBtn"></button>
                         <button onClick={this.zoomIn} id="plusBtn"></button>
-                        <div id="zoomSlider">
-                            <input onChange={this.handleZoomSlider} type="range" min={this.state.minZoom} max={this.state.maxZoom} step="0.1" value={this.state.zoom}></input>
+                        <div>
+                            <input id="zoomSlider" onChange={this.handleZoomSlider} type="range"
+                                min={this.state.initMinZoom} max={this.state.initMaxZoom} step={0.1}
+                                defaultValue={0.8}></input>
                         </div>
                         <button onClick={this.zoomOut} id="minusBtn"></button>
                     </div>
-
                     <section id="midArea" className="col-9">
-
-                        {this.state.renderGraph ? (
-                            <></>
-                        )
-                            :
-                            (
-                                <div className="loader">Loading...</div>
-                            )}
-
+                        {this.state.renderGraph ? (<></>) : (<div className="loader">Loading...</div>)}
                     </section>
-
                     <button onClick={this.toggleRightPanel} id="overlayRightPanelBtn" />
                     <RightPanel rightPanelTopic='Details'></RightPanel>
-
-
                 </div>
             </div>
         </>

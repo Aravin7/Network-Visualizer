@@ -320,7 +320,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		if (isMaster && this.hasFileBuffer === true) {
 			wsio.emit('closeFileBuffer', { id: this.div.id });
 		}
-		//this.handleCloseGraph();
+		this.handleCloseApplication(this.appId);
 		this.terminateChildren();
 		SAGE2RemoteSitePointer.appQuitHidePointers(this);
 		this.serverDataRemoveAllValuesGivenToServer();
@@ -394,6 +394,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 	handleCustomLaunchParams: function (packet) {
 		//console.log(`params:${JSON.stringify(packet)}`);
+		this.appId = packet.appId;
 		if (packet.hasOwnProperty('appName')) {
 			this.updateTitle(`${this.title}: ${packet.appName}`);
 			this.appName = packet.appName;
@@ -405,7 +406,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.graphProperty.links = packet.links;
 			this.graphProperty.targetId = packet.targetId;
 			this.toolProperty.multiWindowState = packet.multiWindowState;
-			this.appId = packet.appId;
 		}
 		if (packet.hasOwnProperty('url')) {
 			this.element.src = packet.url;
@@ -530,11 +530,23 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	openSearch: function (packet) {
 		if (!this.children.includes('search')) {
 			this.children.push('search');
-			let message = {
+			var message = {
 				appName: packet.appName,
 				url: packet.url,
 				options: this.cyElement,
 			}
+			this.launchNewApp(message);
+		}
+	},
+
+	openInfo: function(packet){
+		if(!this.children.includes(packet.appId)){
+			var message = {
+				appName: packet.appName,
+				url: packet.url,
+				appId: packet.appId
+			}
+			this.children.push(packet.appId);
 			this.launchNewApp(message);
 		}
 	},
@@ -556,39 +568,17 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);
 	},
 
-	removeMainGraph: function (overlayId) {
-		var index = this.children.indexOf(overlayId);
-		if (index !== -1) this.children.splice(index, 1);
-		if (this.children.includes('search')) {
-			let message = {
-				nameOfComponent: `searchComponent`,
-				callback: `responeSearchOption`,
-				value: {},
+	handleCloseApplication: function (id) {
+		try{
+			if(this.children.includes(id)){
+				var index = this.children.indexOf(id);
+					if (index !== -1) this.children.splice(index, 1);
 			}
-			this.sendDataToChildrenApps('sendDataToSearch', message);
-		}
-		else {
-			this.cyElement = {};
-		}
-	},
-
-	removeSubGraph: function (packet) {
-		if (this.graphProperty.overlayId === packet.overlayId) {
-			var index = this.children.indexOf(packet.targetId);
-			if (index !== -1) this.children.splice(index, 1);
-		}
-	},
-
-	handleCloseGraph: function () {
-		if (this.graphProperty.graphType === 'main') {
-			this.sendDataToParentApp('removeMainGraph', this.graphProperty.overlayId);
-		}
-		else if (this.graphProperty.graphType === 'sub') {
-			let packet = {
-				overlayId: this.graphProperty.overlayId,
-				targetId: this.graphProperty.targetId
+			else{
+				this.sendDataToParentApp(`handleCloseApplication`, id);
 			}
-			this.sendDataToParentApp('removeSubGraph', packet);
+		}catch(e){
+			console.log(`HandleCloseApplication ERROR > ${e.message}`);
 		}
 	},
 

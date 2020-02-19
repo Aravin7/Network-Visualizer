@@ -9,6 +9,7 @@ import Tool from './Components/SAGE2/Tool';
 import Overlay from './Components/SAGE2/Overlay';
 import Graph from './Components/SAGE2/Graph'
 import Search from './Components/SAGE2/Search';
+import Info from './Components/SAGE2/Info';
 
 // import Header from './Components/Common/Header';
 // import ipop_ic from './Images/Icons/ipop_ic.svg';
@@ -40,6 +41,9 @@ function App(){
         </Route>
         <Route exact path="/search">
           <Search/>
+        </Route>
+        <Route exact path="/info">
+          <Info/>
         </Route>
       </Switch>
     </Router>

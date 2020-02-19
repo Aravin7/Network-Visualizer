@@ -1,5 +1,5 @@
 import React from "react";
-import "../../CSS/Main.css";
+//import "../../CSS/Main.css";
 import ReactDOM from "react-dom";
 import "react-tippy/dist/tippy.css";
 import { Tooltip } from "react-tippy";

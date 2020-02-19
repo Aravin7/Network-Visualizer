@@ -73,7 +73,7 @@ header{
 #rightPanel{
     color: white;
     position: absolute;
-    width: 24vw;
+    width: 30vw;
     right: 0;
     padding: 1%;
     margin-top: 0.05%;
@@ -110,6 +110,7 @@ header{
 #leftTools{
     position: fixed;
     height: 100vh;
+    width: 5vw;
     z-index: 2;
 }
 
@@ -176,7 +177,11 @@ header{
 
 .DetailsLabel{
     color: gray;
-    font-size: 14px;
+    font-size: 40px;
+}
+
+#elementDetail{
+    font-size: 25px;
 }
 
 #switchBtn{
@@ -211,6 +216,26 @@ header{
 #rightPanelContent{
     height: 95vh;
     overflow-y: auto;
+}
+
+.node_img{
+    width: 100%;
+}
+
+.tunnel_img{
+    width: 90%;
+}
+
+table.info{
+    width: 100vw;
+    height: 100vh;
+    background-color: #101B2B;
+}
+
+.info, table.info tr td, table.info tr th{
+    font-family: tahoma;
+    font-size: 40px;
+    color: #ffffff;
 }
 
 .loader{

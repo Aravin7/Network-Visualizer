@@ -17,11 +17,11 @@ class Tool extends React.Component {
     }
 
     componentDidMount() {
-        let value = {
+        var packet = {
             width: 1000,
             height: 200
         }
-        window.SAGE2_AppState.callFunctionInContainer('setWindowSize', value);
+        this.setWindowSize(packet)
     }
 
     handleOnClick = (target) => {
@@ -50,7 +50,26 @@ class Tool extends React.Component {
                     window.SAGE2_AppState.callFunctionInContainer('set', packet);
                 })
                 break;
+            case 'info' :
+            var packet = {
+                name: `Info`,
+                data: {
+                    appName: `Legend`,
+                    url: `http://150.29.149.79:3000/info`,
+                    appId: `info`
+                }
+            }
+            window.SAGE2_AppState.callFunctionInContainer(`open`,packet);
+            break;
         }
+    }
+
+    setWindowSize = (size) => {
+        var packet = {
+            width: size.width,
+            height: size.height,
+        }
+        window.SAGE2_AppState.callFunctionInContainer('setWindowSize', packet);
     }
 
 
@@ -61,7 +80,7 @@ class Tool extends React.Component {
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('overlay')}><img src={overlay_ic} alt="overlay_ic" /></Button>
                 <Button type="button" variant="link" className=""><img src={refresh_ic} alt="refresh_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('search')}><img src={search_ic} alt="search_ic" /></Button>
-                <Button type="button" variant="link" className=""><img src={info_ic} alt="info_ic" /></Button>
+                <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('info')}><img src={info_ic} alt="info_ic" /></Button>
                 <Button type="button" variant="link" className=""><img src={rearrange_ic} alt="rearrange_ic" /></Button>
                 <Button variant="primary" onClick={(e) => this.handleOnClick('multi')}>{this.state.isMulti ? 'Multi-Window:ON' : 'Multi-Window:OFF'}</Button>
             </div>
