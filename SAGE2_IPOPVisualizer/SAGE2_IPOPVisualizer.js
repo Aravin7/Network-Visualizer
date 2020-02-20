@@ -91,9 +91,11 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		})
 
 		if (typeof data.customLaunchParams != 'undefined') {
+			console.log(`${ui.width},${ui.height}`);
 			//this.element.src = data.customLaunchParams.url;
 			this.handleCustomLaunchParams(data.customLaunchParams);
 		} else {
+			console.log(`${ui.width},${ui.height}`);
 			this.element.src = 'http://150.29.149.79:3000/'; /* IP for React client server*/
 			this.appName = 'Tool';
 			this.appId = '0';
@@ -339,7 +341,21 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	},
 
 	setWindowSize: function (packet) {
-		this.sendResize(packet.width, packet.height);
+		if (packet.hasOwnProperty('sage2w')) {
+			var [width, height] = [this.normalizedWidth(packet.sage2w, packet.width), this.normalizedHeight(packet.sage2h, packet.height)]
+			console.log('width:' + width)
+			this.sendResize(width, height);
+		} else {
+			this.sendResize(packet.width, packet.height);
+		}
+	},
+
+	normalizedWidth: function(standardSage2w,standardW){
+		return parseInt((ui.width * standardW) / standardSage2w);
+	},
+
+	normalizedHeight: function(standardSage2h,standardH){
+		return parseInt((ui.height * standardH) / standardSage2h);
 	},
 
 	launchNewApp: function (packet) {
@@ -494,12 +510,16 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				console.log(e.message)
 			})
 		} else {
-			if(this.appId === packet.oldTargetId){
+			if (this.appId === packet.oldTargetId) {
 				this.updateTitle(`${this.title}: ${packet.newTargetLabel}`);
 				this.appId = packet.newTargetId;
 			}
 			this.sendDataToParentApp(`setSelectedFromSub`, packet);
 		}
+	},
+
+	setWindowSizeAndPosition: function (packet) {
+
 	},
 
 	request: function (packet) {
@@ -539,8 +559,8 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
-	openInfo: function(packet){
-		if(!this.children.includes(packet.appId)){
+	openInfo: function (packet) {
+		if (!this.children.includes(packet.appId)) {
 			var message = {
 				appName: packet.appName,
 				url: packet.url,
@@ -569,15 +589,15 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	},
 
 	handleCloseApplication: function (id) {
-		try{
-			if(this.children.includes(id)){
+		try {
+			if (this.children.includes(id)) {
 				var index = this.children.indexOf(id);
-					if (index !== -1) this.children.splice(index, 1);
+				if (index !== -1) this.children.splice(index, 1);
 			}
-			else{
+			else {
 				this.sendDataToParentApp(`handleCloseApplication`, id);
 			}
-		}catch(e){
+		} catch (e) {
 			console.log(`HandleCloseApplication ERROR > ${e.message}`);
 		}
 	},

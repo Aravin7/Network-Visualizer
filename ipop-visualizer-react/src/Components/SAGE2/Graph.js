@@ -25,7 +25,7 @@ class Graph extends React.Component {
             , graphType: null
             , multiWindowState: false
             , targetId: null
-            , selectedOverlay: '101000F', graphType: 'main' /** For React test */
+            , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
         };
         window.graphComponent = this;
     }
@@ -52,10 +52,10 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
-        this.fetchData();
+        //this.fetchData();
         this.toggleRightPanel(true);
-        //this.requestGraphProperty();
-        //this.requestToolProperty();
+        this.requestGraphProperty();
+        this.requestToolProperty();
     }
 
     /**
@@ -89,25 +89,40 @@ class Graph extends React.Component {
         packet = JSON.parse(packet);
         this.setState({ selectedOverlay: packet.overlayId, graphType: packet.graphType });
         if (packet.graphType === 'main') {
-            let value = {
-                width: 2480,
-                height: 1640
+            var value = {
+                width: 1280,
+                height: 960,
+                sage2w: 3840,
+                sage2h: 2160,
             }
             window.SAGE2_AppState.callFunctionInContainer('setWindowSize', value);
             this.fetchData();
         }
         else {
-            this.createSubGraph(packet).then((value) => {
-                this.setState({ renderGraph: true, targetId: packet.targetId });
-                this.renderGraph();
-            }).then(() => {
-                if (packet.targetId) {
-                    this.handleSelectCyElement(packet.targetId);
+            var promise = new Promise((resolve, reject) => {
+                var value = {
+                    width: 1024,
+                    height: 768,
+                    sage2w: 3840,
+                    sage2h: 2160,
                 }
+                window.SAGE2_AppState.callFunctionInContainer('setWindowSize', value);
+                resolve(true);
             })
-                .catch((e) => {
-                    console.log(`Error Message: ${e}`);
-                });
+
+            promise.then(() => {
+                this.createSubGraph(packet).then((value) => {
+                    this.setState({ renderGraph: true, targetId: packet.targetId });
+                    this.renderGraph();
+                }).then(() => {
+                    if (packet.targetId) {
+                        this.handleSelectCyElement(packet.targetId);
+                    }
+                })
+                    .catch((e) => {
+                        console.log(`Error Message: ${e}`);
+                    });
+            })
         }
         this.setState({ graphType: packet.graphType });
     }
@@ -219,7 +234,7 @@ class Graph extends React.Component {
             var sourceNode = this.state.nodeDetails.sourceNode;
             var connectedNodes = this.state.nodeDetails.connectedNodes;
             var ipop = this.state.ipop;
-            rightPanelContent = <div id="elementDetail">
+            rightPanelContent = <div id="elementDetails">
 
                 <h2>{sourceNode.nodeName}</h2>
 
@@ -303,8 +318,8 @@ class Graph extends React.Component {
             var linkDetails = this.state.linkDetails.linkDetails;
             var sourceNodeDetails = this.state.linkDetails.sourceNodeDetails;
             var targetNodeDetails = this.state.linkDetails.targetNodeDetails;
-            rightPanelContent = <div>
-                <h5>{linkDetails.InterfaceName}</h5>
+            rightPanelContent = <div id='elementDetails'>
+                <h2>{linkDetails.InterfaceName}</h2>
 
                 <div className="row">
 
@@ -590,8 +605,8 @@ class Graph extends React.Component {
      * @method handleMouseOverPage
      */
     handleMouseOverPage = (e) => {
-        if(this.state.graphType === 'sub' && this.state.currentSelectedElement)
-        this.handleClickCyElement(this.state.currentSelectedElement.id());
+        if (this.state.graphType === 'sub' && this.state.currentSelectedElement)
+            this.handleClickCyElement(this.state.currentSelectedElement.id());
         //console.log(`TargetId:${this.state.targetId}, CurrentElement:${this.state.currentSelectedElement.id()}`);
     }
 
@@ -694,35 +709,7 @@ class Graph extends React.Component {
         }
         else {
             this.setState({ isShowRightPanel: flag }, () => {
-                var promise = new Promise( (resolve, reject) => {
-                    try{
-                        document.getElementById("rightPanel").hidden = this.state.isShowRightPanel;
-                        resolve(!this.state.isShowRightPanel && this.cy)
-                    }
-                    catch(e){
-                        reject(e);
-                    }
-                })
-                promise.then( (value) => {
-                    if(value){
-                        var currentPan = this.cy.pan();
-                        this.cy.pan({
-                            x:currentPan.x - (document.getElementById('rightPanel').offsetWidth/2),
-                            y: currentPan.y
-                        })
-                        console.log(this.cy.pan());
-                    }
-                    else{
-                        var currentPan = this.cy.pan();
-                        this.cy.pan({
-                            x:currentPan.x * 2,
-                            y: currentPan.y
-                        })
-                        console.log(this.cy.pan());
-                    }
-                }).catch( (e) => {
-                    console.log(e.message);
-                })
+                document.getElementById("rightPanel").hidden = this.state.isShowRightPanel
             })
         }
     }
@@ -788,7 +775,7 @@ class Graph extends React.Component {
     render() {
         return <>
             <div id="container" className="container-fluid">
-                <div id="mainContent" className="row" style={{ backgroundColor: "#101B2B", color: "white" }}>
+                <div id="mainContent" className="row" style={{ color: "white" }}>
                     <div id="leftTools" className="col-1">
                         <button id="infoBtn"></button>
                         <button id="configBtn"></button>

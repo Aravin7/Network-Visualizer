@@ -19,7 +19,9 @@ class Tool extends React.Component {
     componentDidMount() {
         var packet = {
             width: 1000,
-            height: 200
+            height: 200,
+            sage2w: 3840,
+            sage2h: 2160,
         }
         this.setWindowSize(packet)
     }
@@ -68,6 +70,8 @@ class Tool extends React.Component {
         var packet = {
             width: size.width,
             height: size.height,
+            // sage2w: size.sage2w,
+            // sage2h: size.sage2h,
         }
         window.SAGE2_AppState.callFunctionInContainer('setWindowSize', packet);
     }

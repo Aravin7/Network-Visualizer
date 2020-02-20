@@ -1,16 +1,18 @@
 /* customize global */
-*{
+
+* {
     font-family: tahoma;
     font-size: 16px;
 }
 
-#root{
+#root {
     width: 100vw;
     height: 100vh;
 }
 
 /* customize Herder Tag */
-header{
+
+header {
     width: 100vw;
     height: 6vh;
     color: white;
@@ -18,18 +20,21 @@ header{
 }
 
 /* customize title name */
-#ipopTitle{
+
+#ipopTitle {
     transform: translateY(20%);
 }
 
 /* customize view selector */
-#viewSelector{
+
+#viewSelector {
     outline: none;
     border-radius: 3px;
 }
 
 /* customize search bar */
-#search{
+
+#search {
     width: 100%;
     margin-bottom: 2%;
     outline: none;
@@ -39,14 +44,15 @@ header{
     background-color: #101B2B;
 }
 
-#container{
+#container {
     position: absolute;
     width: 100vw;
     height: 94vh;
 }
 
 /* customize main content */
-#mainContent{
+
+#mainContent {
     position: fixed;
     width: 100vw;
     color: white;
@@ -54,41 +60,131 @@ header{
     background-color: #101B2B;
 }
 
-#midArea{
+#midArea {
     margin: auto;
 }
 
 /* customize overlay button */
-.overlay{
+
+.overlay {
     background: transparent;
     border: none;
     outline: none;
 }
 
-.overlay_ic{
+.overlay_ic {
     width: 75%;
 }
 
 /* customize right panel */
-#rightPanel{
+
+#rightPanel {
     color: white;
     position: absolute;
-    width: 30vw;
     right: 0;
     padding: 1%;
     margin-top: 0.05%;
     background-color: #213758;
     z-index: 1;
+    word-wrap: break-word;
 }
 
-.transmissionCard{
+@media (max-width: 1280px) and (min-width: 0px) {
+    #elementDetails{
+        font-size: 16px;
+    }
+    .Details {
+        font-size: 16px;
+    }
+    .DetailsLabel {
+        color: gray;
+        font-size: 16px;
+    }
+    #rightPanel {
+        width: 30vw;
+    }
+}
+
+@media (max-width: 1919px) and (min-width: 1281px) {
+    #elementDetails h2, .Details{
+        font-size: 25px;
+    }
+    .DetailsLabel {
+        color: gray;
+        font-size: 25px;
+    }
+    #connectedNode .DetailsLabel{
+        font-size: 25px;
+    }
+    #elementDetails, .collapseHeader{
+        font-size: 20px;
+    }
+    .collapseContent, .transmissionCard{
+        font-size: 20px;
+    }
+    #rightPanel {
+        width: 25vw;
+    }
+}
+
+@media (max-width: 2460px) and (min-width: 1920px) {
+    #elementDetails, .collapseHeader{
+        font-size: 30px;
+    }
+    .collapseContent, .transmissionCard{
+        font-size: 30px;
+    }
+    #elementDetails h2, .Details{
+        font-size: 45px;
+    }
+    .DetailsLabel {
+        color: gray;
+        font-size: 35px;
+    }
+    #connectedNode .DetailsLabel{
+        font-size: 35px;
+    }
+    #rightPanel {
+        width: 30vw;
+    }
+}
+
+@media (min-width: 2461px) {
+    #elementDetails, .collapseHeader{
+        font-size: 35px;
+    }
+    .collapseContent, .transmissionCard{
+        font-size: 35px;
+    }
+    #elementDetails h2, .Details{
+        font-size: 50px;
+    }
+    .DetailsLabel {
+        color: gray;
+        font-size: 40px;
+    }
+    #connectedNode .DetailsLabel{
+        font-size: 40px;
+    }
+    #rightPanel {
+        width: 30vw;
+    }
+}
+
+#rightPanelContent {
+    height: 90vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.transmissionCard {
     border-radius: 3px;
     border: solid #486186;
     background-color: #405B80;
     margin-bottom: 1%;
 }
 
-#overlayRightPanelBtn{
+#overlayRightPanelBtn {
     margin: 0.5%;
     right: 0;
     width: 30px;
@@ -101,26 +197,26 @@ header{
     z-index: 2;
 }
 
-.overlayBtn{
+.overlayBtn {
     border-radius: 3px;
     border: solid #486186;
     background-color: #405B80;
 }
 
-#leftTools{
+#leftTools {
     position: fixed;
     height: 100vh;
     width: 5vw;
     z-index: 2;
 }
 
-#midArea{
+#midArea {
     margin: 0;
     width: 100%;
     padding: 0;
 }
 
-#homeBtn{
+#homeBtn {
     width: 60px;
     border: none;
     height: 60px;
@@ -128,7 +224,7 @@ header{
     background: url(../Images/Icons/home_ic.svg);
 }
 
-#refreshBtn{
+#refreshBtn {
     width: 60px;
     border: none;
     height: 60px;
@@ -136,7 +232,7 @@ header{
     background: url(../Images/Icons/refresh_ic.svg);
 }
 
-#infoBtn{
+#infoBtn {
     width: 60px;
     border: none;
     height: 60px;
@@ -144,7 +240,7 @@ header{
     background: url(../Images/Icons/info_ic.svg);
 }
 
-#configBtn{
+#configBtn {
     width: 60px;
     border: none;
     height: 60px;
@@ -152,7 +248,7 @@ header{
     background: url(../Images/Icons/config_ic.svg);
 }
 
-#plusBtn{
+#plusBtn {
     width: 60px;
     border: none;
     height: 60px;
@@ -160,14 +256,18 @@ header{
     background: url(../Images/Icons/plus_ic.svg);
 }
 
-#zoomSlider{
+#zoomSlider {
+    position: absolute;
+    margin-left: -15.5vh;
+    margin-top: 16.9vh;
+    transform: rotate(-90deg);
+    width: 35vh;
+    height: 20px;
 }
 
-#zoomSlider input{
 
-}
-
-#minusBtn{
+#minusBtn {
+    margin-top: 35.5vh;
     width: 60px;
     border: none;
     height: 60px;
@@ -175,25 +275,16 @@ header{
     background: url(../Images/Icons/minus_ic.svg);
 }
 
-.DetailsLabel{
-    color: gray;
-    font-size: 40px;
-}
-
-#elementDetail{
-    font-size: 25px;
-}
-
-#switchBtn{
+#switchBtn {
     width: 30px;
-    height:30px;
+    height: 30px;
     border: none;
     outline: none;
     background: url(../Images/Icons/swap_ic.svg)no-repeat;
     background-size: cover;
 }
 
-#cy{
+#cy {
     height: 100%;
     width: 100%;
     position: absolute;
@@ -205,40 +296,35 @@ header{
 
 .ToolPage {
     background-color: #101B2B;
-    color:white;
+    color: white;
     height: 100vh;
 }
 
-.optionsLabel{
+.optionsLabel {
     font-size: 150%;
 }
 
-#rightPanelContent{
-    height: 95vh;
-    overflow-y: auto;
-}
-
-.node_img{
+.node_img {
     width: 100%;
 }
 
-.tunnel_img{
+.tunnel_img {
     width: 90%;
 }
 
-table.info{
+table.info {
     width: 100vw;
     height: 100vh;
     background-color: #101B2B;
 }
 
-.info, table.info tr td, table.info tr th{
+.info, table.info tr td, table.info tr th {
     font-family: tahoma;
     font-size: 40px;
     color: #ffffff;
 }
 
-.loader{
+.loader {
     z-index: 15;
     top: 10vh;
     left: 10vw;
@@ -263,8 +349,9 @@ table.info{
     -webkit-transform: translateZ(0);
     -ms-transform: translateZ(0);
     transform: translateZ(0);
-  }
-  .loader:before {
+}
+
+.loader:before {
     width: 50%;
     height: 50%;
     background: #ffffff;
@@ -273,8 +360,9 @@ table.info{
     top: 0;
     left: 0;
     content: '';
-  }
-  .loader:after {
+}
+
+.loader:after {
     background: #101B2B;
     width: 75%;
     height: 75%;
@@ -286,28 +374,29 @@ table.info{
     left: 0;
     bottom: 0;
     right: 0;
-  }
-  @-webkit-keyframes load3 {
+}
+
+@-webkit-keyframes load3 {
     0% {
-      -webkit-transform: rotate(0deg);
-      transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
     }
     100% {
-      -webkit-transform: rotate(360deg);
-      transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
     }
-  }
-  @keyframes load3 {
+}
+
+@keyframes load3 {
     0% {
-      -webkit-transform: rotate(0deg);
-      transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
     }
     100% {
-      -webkit-transform: rotate(360deg);
-      transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
     }
-  }
-  
+}
 
 /* .rbt-input-hint-container input{
     height: 30vh;

@@ -7,7 +7,7 @@ class CollapseButton extends React.Component {
     render() {
         return (<Accordion className="overlayBtn" style={{ marginTop: "2.5%" }}>
             <Accordion.Toggle as={Card.Header} style={{ color: "white", background: "transparent", border: "transparent", outline: "none" }} eventKey={this.props.name}>
-                {this.props.name}
+                <div className="collapseHeader">{this.props.name}</div>
             </Accordion.Toggle>
             <Accordion.Collapse as={Card.Body} eventKey={this.props.name} style={{ backgroundColor: "#213758", padding: "1%" }}>
                 <div className="collapseContent">{this.props.children}</div>

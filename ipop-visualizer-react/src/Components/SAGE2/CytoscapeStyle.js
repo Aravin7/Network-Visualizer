@@ -2,21 +2,25 @@ var CytoscapeStyle = [
     {
         selector: 'node',
         style: {
-            width: 36.37,
-            height: 36.37,
+            width: "100%",
+            height: "100%",
             "background-color": "#9FC556",
             "label": "data(label)",
             "text-valign": "center",
             "text-outline-color": "#9FC556",
-            "text-outline-width": "5%",
-            "text-outline-opacity": "1",
+            "text-outline-width": "4%",
+            "font-size": "40px",
+            "color": "#111",
+            "font-style":"bold"
+            // "text-"
+
         }
 
     }, {
         selector: "node.selected",
         style: {
-            width: 36.37,
-            height: 36.37,
+            width: "100%",
+            height: "100%",
             "border-width": "50%",
             "border-color": "white",
             "border-opacity": "0.2",
@@ -26,9 +30,11 @@ var CytoscapeStyle = [
     {
         selector: 'edge',
         style: {
+            width:8,
             'curve-style': 'haystack',
             //"line-color": "#56C5BC",
             "line-color": `data(color)`,
+            
         }
     }, {
         selector: "edge.selected",
