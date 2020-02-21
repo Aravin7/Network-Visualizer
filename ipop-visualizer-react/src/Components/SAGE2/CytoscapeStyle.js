@@ -29,11 +29,11 @@ var CytoscapeStyle = [
     {
         selector: 'edge',
         style: {
-            width:8,
+            width: 8,
             'curve-style': 'haystack',
             //"line-color": "#56C5BC",
             "line-color": `data(color)`,
-            
+
         }
     }, {
         selector: "edge.selected",
@@ -55,7 +55,7 @@ var CytoscapeStyle = [
     {
         selector: 'node.Subgraph',
         style: {
-            'display':'none',
+            'display': 'none',
         }
     },
     {
@@ -63,7 +63,18 @@ var CytoscapeStyle = [
         style: {
             'display': 'none',
         }
-    }
+    }, {
+        selector: 'node.Topology',
+        style: {
+            'opacity': '0.3',
+        }
+    },
+    {
+        selector: 'edge.Topology',
+        style: {
+            'opacity': '0.3',
+        }
+    },
 ]
 
 export default CytoscapeStyle;

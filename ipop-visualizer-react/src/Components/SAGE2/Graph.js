@@ -12,6 +12,8 @@ import CytoscapeStyle from './CytoscapeStyle';
 import { nullLiteral } from "@babel/types";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
+import Select from "react-select";
+
 
 class Graph extends React.Component {
     constructor(props) {
@@ -26,9 +28,13 @@ class Graph extends React.Component {
             , graphType: null
             , multiWindowState: false
             , targetId: null
-            , viewSelector: 'Topology' /** Deault view */
-            , selectedOverlay: '101000F', graphType: 'main' /** For React test */
+            , viewSelector: { label: "Topology", value: "Topology" } /** Deault view */
+            , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
         };
+        this.viewOptions = [
+            { label: "Topology", value: "Topology" },
+            { label: "Subgraph", value: "Subgraph" },
+        ]
         window.graphComponent = this;
     }
 
@@ -54,10 +60,10 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
-        this.fetchData();
+        //this.fetchData();
         this.toggleRightPanel(true);
-        //this.requestGraphProperty();
-        //this.requestToolProperty();
+        this.requestGraphProperty();
+        this.requestToolProperty();
     }
 
     /**
@@ -114,7 +120,7 @@ class Graph extends React.Component {
 
             promise.then(() => {
                 this.createSubGraph(packet).then((value) => {
-                    this.setState({ renderGraph: true, targetId: packet.targetId });
+                    this.setState({ renderGraph: true, targetId: packet.targetId, viewSelector: { label: "Subgraph", value: "Subgraph" } });
                     this.renderGraph();
                 }).then(() => {
                     if (packet.targetId) {
@@ -637,14 +643,26 @@ class Graph extends React.Component {
     }
 
     handleViewSelector = (e) => {
-        this.setState({ viewSelector: e.target.value }, () => {
+        if (this.cy) {
+            this.cy.elements().removeClass(this.state.viewSelector.value);
+            this.cy.elements().removeClass('selected');
+        }
+        this.setState({ viewSelector: e }, () => {
             try {
-                this[`render${this.state.viewSelector}`]();
+                this.renderChangeView(this.state.currentSelectedElement);
             }
             catch (e) {
                 console.log(e.message);
             }
         })
+        // this.setState({ viewSelector: e.target.value }, () => {
+        //     try {
+        //         this.renderChangeView(this.state.currentSelectedElement);
+        //     }
+        //     catch (e) {
+        //         console.log(e.message);
+        //     }
+        // })
     }
 
     /**
@@ -693,8 +711,8 @@ class Graph extends React.Component {
             nodeDetails: {
                 'sourceNode': sourceNode, 'connectedNodes': connectedNodes,
             }
-        },() => {
-            this[`render${this.state.viewSelector}`]();
+        }, () => {
+            this.renderChangeView(node);
         })
         // if (this.state.graphType === 'main') {
         //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
@@ -719,7 +737,10 @@ class Graph extends React.Component {
     eventClickEdge = (edge) => {
         var [linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails]
             = [this.state.ipop.getLinkDetails(edge.data('source'), edge.data('id')), edge.data('source'), edge.data('target'), this.state.ipop.getNodeDetails(edge.data('target')), this.state.ipop.getNodeDetails(edge.data('source'))];
-        this.setState({ linkDetails: { linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails } })
+        this.setState({ linkDetails: { linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails } },
+            () => {
+                this.renderChangeView(edge);
+            })
         // if (this.state.graphType === 'main') {
         //     this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent') /** style for test */
         //     if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
@@ -769,7 +790,7 @@ class Graph extends React.Component {
                     this.cy.on('click', (event) => {
                         if (event.target !== cy) {
                             /** reset style */
-                            cy.elements().removeClass('transparent');
+                            cy.elements().removeClass(this.state.viewSelector.value);
                             cy.elements().removeClass('selected');
                             var element = event.target;
                             _this.setState({ currentSelectedElement: element }, () => {
@@ -784,7 +805,7 @@ class Graph extends React.Component {
                         }
                         else {
                             if (_this.state.graphType === 'main') {
-                                cy.elements().removeClass('transparent');
+                                cy.elements().removeClass(this.state.viewSelector.value);
                                 cy.elements().removeClass('selected');
                             }
                             else {
@@ -814,28 +835,29 @@ class Graph extends React.Component {
             , document.getElementById('midArea'))
     }
 
-    renderTopology = () => {
-        if (this.state.currentSelectedElement) {
-            var node = this.state.currentSelectedElement;
-            if (this.state.graphType === 'main') {
-                this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
-                if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
-                else this.createNodeDetail(false);
+    renderChangeView = (element) => {
+        if (element) {
+            if (element.isNode()) {
+                this.cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass(this.state.viewSelector.value);
+                if (this.state.graphType === 'main') {
+                    if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
+                    else this.createNodeDetail(false);
+                }
+                else {
+                    this.createNodeDetail(true)
+                }
             }
             else {
-                this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
-                this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
-                this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
-                this.createNodeDetail(true);
-
+                this.cy.elements().difference(element.connectedNodes()).not(element).addClass(this.state.viewSelector.value);
+                if (this.state.graphType === 'main') {
+                    if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
+                    else this.createEdgeDetail(false);
+                }
+                else {
+                    this.createEdgeDetail(true);
+                }
             }
-            node.addClass('selected');
-        }
-    }
-
-    renderSubgraph = () => {
-        if(this.state.currentSelectedElement){
-            
+            element.addClass('selected');
         }
     }
 
@@ -853,7 +875,7 @@ class Graph extends React.Component {
                             <Popover>
                                 <Popover.Title as="h3">IPOP Network Visualizer : View</Popover.Title>
                                 <Popover.Content id="configContent">
-                                    <div className="row">
+                                    {/* <div className="row">
                                         <div className="col">
                                             <label>View</label>
                                         </div>
@@ -867,6 +889,14 @@ class Graph extends React.Component {
                                                 <option value="TunnelUtilization">TunnelUtilization</option>
                                             </select>
                                         </div>
+                                    </div> */}
+                                    <div>
+                                        <Select
+                                            options={this.viewOptions}
+                                            onChange={value => this.handleViewSelector(value)}
+                                            value={this.state.viewSelector}
+                                            defaultValue={this.state.viewSelector}
+                                        />
                                     </div>
                                 </Popover.Content>
                             </Popover>}>
