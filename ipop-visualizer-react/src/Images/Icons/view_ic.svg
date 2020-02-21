@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="140" viewBox="0 0 140 140">
+  <defs>
+    <filter id="Rectangle_1021" x="0" y="0" width="140" height="140" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-opacity="0.251"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Group_211" data-name="Group 211" transform="translate(10 7)">
+    <g transform="matrix(1, 0, 0, 1, -10, -7)" filter="url(#Rectangle_1021)">
+      <g id="Rectangle_1021-2" data-name="Rectangle 1021" transform="translate(10 7)" fill="#213758" stroke="#405b80" stroke-width="1">
+        <rect width="120" height="120" rx="6" stroke="none"/>
+        <rect x="-0.5" y="-0.5" width="121" height="121" rx="6.5" fill="none"/>
+      </g>
+    </g>
+    <g id="image" transform="translate(12.224 13.954)">
+      <path id="Path_79" data-name="Path 79" d="M154.308,74.467a4.988,4.988,0,1,0-4.988-4.988A4.992,4.992,0,0,0,154.308,74.467Zm0,0" transform="matrix(0.966, -0.259, 0.259, 0.966, -144.034, 5.219)" fill="#8fa7c7"/>
+      <path id="Path_80" data-name="Path 80" d="M155.636.492H95.365A10.06,10.06,0,0,0,85.32,10.538v44.2A10.06,10.06,0,0,0,95.365,64.782h60.271a10.06,10.06,0,0,0,10.046-10.046v-44.2A10.06,10.06,0,0,0,155.636.492ZM95.365,8.529h60.271a2.01,2.01,0,0,1,2.009,2.009V39.062L144.953,24.251a7.2,7.2,0,0,0-5.389-2.471,7.023,7.023,0,0,0-5.368,2.535L119.273,42.228l-4.862-4.85a7.053,7.053,0,0,0-9.965,0L93.356,48.464V10.538A2.009,2.009,0,0,1,95.365,8.529Zm0,0" transform="translate(-77.892 13.508)" fill="#8fa7c7"/>
+    </g>
+  </g>
+</svg>

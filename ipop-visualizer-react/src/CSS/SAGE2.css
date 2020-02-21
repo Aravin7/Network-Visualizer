@@ -284,6 +284,14 @@ header {
     background-size: cover;
 }
 
+#viewBtn {
+    width: 60px;
+    border: none;
+    height: 60px;
+    outline: none;
+    background: url(../Images/Icons/view_ic.svg);
+}
+
 #cy {
     height: 100%;
     width: 100%;

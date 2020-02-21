@@ -10,13 +10,14 @@ import Card from "react-bootstrap/Card";
 import RightPanel from "./RightPanel";
 import CytoscapeStyle from './CytoscapeStyle';
 import { nullLiteral } from "@babel/types";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Popover from "react-bootstrap/Popover";
 
 class Graph extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            nodes: [], links: [], initMinZoom: 0.2
-            , initMaxZoom: 2
+            nodes: [], links: [], initMinZoom: 0.2, initMaxZoom: 2, setMinZoom: 0.2, setMaxZoom: 2
             , switchToggle: false
             , isShowRightPanel: false
             , nodeDetails: null
@@ -25,7 +26,8 @@ class Graph extends React.Component {
             , graphType: null
             , multiWindowState: false
             , targetId: null
-            , /*selectedOverlay: '101000F', graphType: 'main' /** For React test */
+            , viewSelector: 'Topology' /** Deault view */
+            , selectedOverlay: '101000F', graphType: 'main' /** For React test */
         };
         window.graphComponent = this;
     }
@@ -52,10 +54,10 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
-        //this.fetchData();
+        this.fetchData();
         this.toggleRightPanel(true);
-        this.requestGraphProperty();
-        this.requestToolProperty();
+        //this.requestGraphProperty();
+        //this.requestToolProperty();
     }
 
     /**
@@ -437,7 +439,7 @@ class Graph extends React.Component {
      */
     fetchData = () => {
         var intervalNo = new Date().toISOString().split(".")[0];
-        var serverIP = '18.220.44.57:5000';
+        var serverIP = '52.139.216.32:5000';
         var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
 
         var nodeURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/nodes?interval=" + intervalNo + "&current_state=True";
@@ -610,6 +612,41 @@ class Graph extends React.Component {
         //console.log(`TargetId:${this.state.targetId}, CurrentElement:${this.state.currentSelectedElement.id()}`);
     }
 
+    handleSetMinZoom = (e) => {
+        try {
+            this.cy.minZoom(parseFloat(e.target.value));
+            document.getElementById("zoomSlider").min = parseFloat(e.target.value);
+        } finally {
+            if (this.cy.zoom() < parseFloat(e.target.value)) {
+                this.cy.zoom(parseFloat(e.target.value));
+            }
+            this.setState({ setMinZoom: e.target.value })
+        }
+    }
+
+    handleSetMaxZoom = (e) => {
+        try {
+            this.cy.maxZoom(parseFloat(e.target.value));
+            document.getElementById("zoomSlider").max = parseFloat(e.target.value);
+        } finally {
+            if (this.cy.zoom() > parseFloat(e.target.value)) {
+                this.cy.zoom(parseFloat(e.target.value));
+            }
+            this.setState({ setMinZoom: e.target.value })
+        }
+    }
+
+    handleViewSelector = (e) => {
+        this.setState({ viewSelector: e.target.value }, () => {
+            try {
+                this[`render${this.state.viewSelector}`]();
+            }
+            catch (e) {
+                console.log(e.message);
+            }
+        })
+    }
+
     /**
      * End section `handle` method.
      */
@@ -656,20 +693,22 @@ class Graph extends React.Component {
             nodeDetails: {
                 'sourceNode': sourceNode, 'connectedNodes': connectedNodes,
             }
+        },() => {
+            this[`render${this.state.viewSelector}`]();
         })
-        if (this.state.graphType === 'main') {
-            this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
-            if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
-            else this.createNodeDetail(false);
-        }
-        else {
-            this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
-            this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
-            this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
-            this.createNodeDetail(true);
+        // if (this.state.graphType === 'main') {
+        //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
+        //     if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
+        //     else this.createNodeDetail(false);
+        // }
+        // else {
+        //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
+        //     this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
+        //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
+        //     this.createNodeDetail(true);
 
-        }
-        node.addClass('selected');
+        // }
+        // node.addClass('selected');
     }
 
     /**
@@ -681,17 +720,17 @@ class Graph extends React.Component {
         var [linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails]
             = [this.state.ipop.getLinkDetails(edge.data('source'), edge.data('id')), edge.data('source'), edge.data('target'), this.state.ipop.getNodeDetails(edge.data('target')), this.state.ipop.getNodeDetails(edge.data('source'))];
         this.setState({ linkDetails: { linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails } })
-        if (this.state.graphType === 'main') {
-            this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent') /** style for test */
-            if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
-            else this.createEdgeDetail(false);
-        }
-        else {
-            this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent');
-            this.cy.elements().difference(edge.connectedNodes()).not(edge).style('display', 'none');
-            this.createEdgeDetail(true);
-        }
-        edge.addClass('selected');
+        // if (this.state.graphType === 'main') {
+        //     this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent') /** style for test */
+        //     if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
+        //     else this.createEdgeDetail(false);
+        // }
+        // else {
+        //     this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent');
+        //     this.cy.elements().difference(edge.connectedNodes()).not(edge).style('display', 'none');
+        //     this.createEdgeDetail(true);
+        // }
+        // edge.addClass('selected');
     }
 
     /**
@@ -714,6 +753,9 @@ class Graph extends React.Component {
         }
     }
 
+    /**
+     * Section of method render.
+     */
     renderGraph = () => {
         ReactDOM.render(
             <Cytoscape id="cy"
@@ -772,13 +814,96 @@ class Graph extends React.Component {
             , document.getElementById('midArea'))
     }
 
+    renderTopology = () => {
+        if (this.state.currentSelectedElement) {
+            var node = this.state.currentSelectedElement;
+            if (this.state.graphType === 'main') {
+                this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
+                if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
+                else this.createNodeDetail(false);
+            }
+            else {
+                this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
+                this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
+                this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
+                this.createNodeDetail(true);
+
+            }
+            node.addClass('selected');
+        }
+    }
+
+    renderSubgraph = () => {
+        if(this.state.currentSelectedElement){
+            
+        }
+    }
+
+    /**
+     * End section of method render.
+     */
+
     render() {
         return <>
             <div id="container" className="container-fluid">
                 <div id="mainContent" className="row" style={{ color: "white" }}>
                     <div id="leftTools" className="col-1">
-                        <button id="infoBtn"></button>
-                        <button id="configBtn"></button>
+
+                        <OverlayTrigger rootClose={true} trigger="click" placement="right" overlay={
+                            <Popover>
+                                <Popover.Title as="h3">IPOP Network Visualizer : View</Popover.Title>
+                                <Popover.Content id="configContent">
+                                    <div className="row">
+                                        <div className="col">
+                                            <label>View</label>
+                                        </div>
+                                        <div className="col">
+                                            <select defaultValue={this.state.viewSelector} onChange={this.handleViewSelector} id="viewSelector">
+                                                <option value="Topology">Topology</option>
+                                                <option value="Subgraph">Subgraph</option>
+                                                <option value="Map">Map</option>
+                                                <option value="Log">Log</option>
+                                                <option value="NetworkFlow">NetworkFlow</option>
+                                                <option value="TunnelUtilization">TunnelUtilization</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </Popover.Content>
+                            </Popover>}>
+                            <button id="viewBtn"></button>
+                        </OverlayTrigger>
+
+                        <OverlayTrigger rootClose={true} trigger="click" placement="right" overlay={
+                            <Popover>
+                                <Popover.Title as="h3">IPOP Network Visualizer : Configure</Popover.Title>
+                                <Popover.Content id="configContent">
+                                    <div className="row">
+                                        <div className="col">
+                                            <label>Minimun zoom</label>
+                                        </div>
+                                        <div className="col">
+                                            <select defaultValue={this.state.setMinZoom} onChange={this.handleSetMinZoom} id="minZoomSelector" value={this.state.minZoom}>
+                                                <option id="0.2">0.2</option>
+                                                <option id="1">1</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="row">
+                                        <div className="col">
+                                            <label>Maximum zoom</label>
+                                        </div>
+                                        <div className="col">
+                                            <select defaultValue={this.state.setMaxZoom} onChange={this.handleSetMaxZoom} id="maxZoomSelector" value={this.state.maxZoom}>
+                                                <option>2</option>
+                                                <option>5</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </Popover.Content>
+                            </Popover>}>
+                            <button onClick={this.handleConfigToggle} id="configBtn" className="leftToolsBtn"></button>
+                        </OverlayTrigger>
+
                         <button onClick={this.zoomIn} id="plusBtn"></button>
                         <div>
                             <input id="zoomSlider" onChange={this.handleZoomSlider} type="range"

@@ -11,7 +11,6 @@ var CytoscapeStyle = [
             "text-outline-width": "4%",
             "font-size": "40px",
             "color": "#111",
-            "font-style":"bold"
             // "text-"
 
         }
@@ -53,6 +52,18 @@ var CytoscapeStyle = [
             'opacity': '0.2',
         }
     },
+    {
+        selector: 'node.Subgraph',
+        style: {
+            'display':'none',
+        }
+    },
+    {
+        selector: 'edge.Subgraph',
+        style: {
+            'display': 'none',
+        }
+    }
 ]
 
 export default CytoscapeStyle;

@@ -20,7 +20,7 @@ class Overlay extends React.Component {
 
     componentDidMount() {
         var intervalNo = new Date().toISOString().split('.')[0];
-        var serverIP = '18.220.44.57:5000'; /* Server IP for get overlay */
+        var serverIP = '52.139.216.32:5000'; /* Server IP for get overlay */
         var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
         var url = `${allowOrigin}http://${serverIP}/IPOP/overlays?interval=${intervalNo}&current_state=True`
         fetch(url).then(res => res.json())
