@@ -13,7 +13,8 @@ import { nullLiteral } from "@babel/types";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 import Select from "react-select";
-
+import GoogleMapReact from "google-map-react";
+import { Button } from 'react-bootstrap';
 
 class Graph extends React.Component {
     constructor(props) {
@@ -34,6 +35,15 @@ class Graph extends React.Component {
         this.viewOptions = [
             { label: "Topology", value: "Topology" },
             { label: "Subgraph", value: "Subgraph" },
+            { label: "Map", value: "Map" },
+        ]
+        this.miniZoom = [
+            { label: "0.2", value: "0.2" },
+            { label: "1", value: "1" },
+        ]
+        this.maxZoom = [
+            { label: "2", value: "2" },
+            { label: "5", value: "5" },
         ]
         window.graphComponent = this;
     }
@@ -192,7 +202,11 @@ class Graph extends React.Component {
                 ipop.init(this.state.selectedOverlay, packet.nodes, packet.links);
                 this.setState({ ipop: ipop });
                 Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
-                    var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}"}}`
+                    /** Test lat lng for map view. */
+                    var [lat, lng] = [this.getRandomInRange(34, 40, 3), this.getRandomInRange(132, 140, 3)]
+                    var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${lat}", "lng":"${lng}"}}`
+
+                    //var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}"}}`
                     var linkIds = Object.keys(packet.links[this.state.selectedOverlay]['current_state'][node]);
 
                     linkIds.forEach(linkIds => {
@@ -222,6 +236,7 @@ class Graph extends React.Component {
                     nodeList.push(JSON.parse(nodeJSON));
                 })
                 this.setState({ nodes: nodeList, links: linkList });
+                delete this.viewOptions[0]; /** Remove Topology view from Subgraph view select options. */
                 resolve(true);
             }
             catch (e) {
@@ -464,7 +479,11 @@ class Graph extends React.Component {
                         ipop.init(this.state.selectedOverlay, nodes, links);
                         this.setState({ ipop: ipop });
                         Object.keys(nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
-                            var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
+                            /** Test lat lng for map view. */
+                            var [lat, lng] = [this.getRandomInRange(34, 40, 3), this.getRandomInRange(132, 140, 3)]
+                            var nodeJSON = `{ "data": { "id": "${node}", "label": "${nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${lat}", "lng":"${lng}"}}`
+
+                            // var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
                             var linkIds = Object.keys(links[this.state.selectedOverlay]['current_state'][node]);
 
                             linkIds.forEach(linkIds => {
@@ -510,11 +529,8 @@ class Graph extends React.Component {
     /**
      * Section of `handle` method.
      * Includes >
-     * @method handleClickCyElement
-     * @method handleSelectCyElement
-     * @method handleSwitch
-     * @method handleZoomSlider
-     * @method handleMouseOverPage
+     * @method handleClickCyElement @method handleSelectCyElement @method handleSwitch
+     * @method handleZoomSlider @method handleMouseOverPage @method handleConfigToggle
      */
 
     /**
@@ -620,25 +636,25 @@ class Graph extends React.Component {
 
     handleSetMinZoom = (e) => {
         try {
-            this.cy.minZoom(parseFloat(e.target.value));
-            document.getElementById("zoomSlider").min = parseFloat(e.target.value);
+            this.cy.minZoom(parseFloat(e.value));
+            document.getElementById("zoomSlider").min = parseFloat(e.value);
         } finally {
-            if (this.cy.zoom() < parseFloat(e.target.value)) {
-                this.cy.zoom(parseFloat(e.target.value));
+            if (this.cy.zoom() < parseFloat(e.value)) {
+                this.cy.zoom(parseFloat(e.value));
             }
-            this.setState({ setMinZoom: e.target.value })
+            this.setState({ setMinZoom: e.value })
         }
     }
 
     handleSetMaxZoom = (e) => {
         try {
-            this.cy.maxZoom(parseFloat(e.target.value));
-            document.getElementById("zoomSlider").max = parseFloat(e.target.value);
+            this.cy.maxZoom(parseFloat(e.value));
+            document.getElementById("zoomSlider").max = parseFloat(e.value);
         } finally {
-            if (this.cy.zoom() > parseFloat(e.target.value)) {
-                this.cy.zoom(parseFloat(e.target.value));
+            if (this.cy.zoom() > parseFloat(e.value)) {
+                this.cy.zoom(parseFloat(e.value));
             }
-            this.setState({ setMinZoom: e.target.value })
+            this.setState({ setMinZoom: e.value })
         }
     }
 
@@ -647,22 +663,30 @@ class Graph extends React.Component {
             this.cy.elements().removeClass(this.state.viewSelector.value);
             this.cy.elements().removeClass('selected');
         }
-        this.setState({ viewSelector: e }, () => {
+        var prevView = null;
+        this.setState((prev) => {
+            prevView = prev.viewSelector.value;
+            return { viewSelector: e };
+        }, () => {
             try {
-                this.renderChangeView(this.state.currentSelectedElement);
+                this[`render${e.value}View`](prevView);
             }
             catch (e) {
                 console.log(e.message);
             }
         })
-        // this.setState({ viewSelector: e.target.value }, () => {
-        //     try {
-        //         this.renderChangeView(this.state.currentSelectedElement);
-        //     }
-        //     catch (e) {
-        //         console.log(e.message);
-        //     }
-        // })
+    }
+
+    handleWheel = (e) => {
+        try {
+            document.getElementById("zoomSlider").value = (this.cy.zoom());
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    handleMakerClicked = (node) => {
+        node.trigger('click');
     }
 
     /**
@@ -712,21 +736,15 @@ class Graph extends React.Component {
                 'sourceNode': sourceNode, 'connectedNodes': connectedNodes,
             }
         }, () => {
-            this.renderChangeView(node);
+            if (this.state.graphType === 'main') {
+                if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
+                else this.createNodeDetail(false);
+            }
+            else {
+                this.createNodeDetail(true)
+            }
+            this.renderAnimationClicked(node);
         })
-        // if (this.state.graphType === 'main') {
-        //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent'); /** Style for test */
-        //     if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
-        //     else this.createNodeDetail(false);
-        // }
-        // else {
-        //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).addClass('transparent');
-        //     this.cy.elements(node.incomers().union(node.outgoers())).style('display', 'element')
-        //     this.cy.elements().difference(node.outgoers().union(node.incomers())).not(node).style('display', 'none');
-        //     this.createNodeDetail(true);
-
-        // }
-        // node.addClass('selected');
     }
 
     /**
@@ -739,19 +757,15 @@ class Graph extends React.Component {
             = [this.state.ipop.getLinkDetails(edge.data('source'), edge.data('id')), edge.data('source'), edge.data('target'), this.state.ipop.getNodeDetails(edge.data('target')), this.state.ipop.getNodeDetails(edge.data('source'))];
         this.setState({ linkDetails: { linkDetails, sourceNode, targetNode, sourceNodeDetails, targetNodeDetails } },
             () => {
-                this.renderChangeView(edge);
+                if (this.state.graphType === 'main') {
+                    if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
+                    else this.createEdgeDetail(false);
+                }
+                else {
+                    this.createEdgeDetail(true);
+                }
+                this.renderAnimationClicked(edge);
             })
-        // if (this.state.graphType === 'main') {
-        //     this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent') /** style for test */
-        //     if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
-        //     else this.createEdgeDetail(false);
-        // }
-        // else {
-        //     this.cy.elements().difference(edge.connectedNodes()).not(edge).addClass('transparent');
-        //     this.cy.elements().difference(edge.connectedNodes()).not(edge).style('display', 'none');
-        //     this.createEdgeDetail(true);
-        // }
-        // edge.addClass('selected');
     }
 
     /**
@@ -835,30 +849,75 @@ class Graph extends React.Component {
             , document.getElementById('midArea'))
     }
 
-    renderChangeView = (element) => {
+    renderAnimationClicked = (element) => {
         if (element) {
-            if (element.isNode()) {
-                this.cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass(this.state.viewSelector.value);
-                if (this.state.graphType === 'main') {
-                    if (!this.state.multiWindowState) this.createNodeDetail(true); /** Node Detail */
-                    else this.createNodeDetail(false);
+            if (this.state.viewSelector.value !== 'Map' || this.state.viewSelector.value !== 'Log') {
+                if (element.isNode()) {
+                    this.cy.elements().difference(element.outgoers().union(element.incomers())).not(element).addClass(this.state.viewSelector.value);
                 }
                 else {
-                    this.createNodeDetail(true)
+                    this.cy.elements().difference(element.connectedNodes()).not(element).addClass(this.state.viewSelector.value);
                 }
+                element.addClass('selected');
             }
-            else {
-                this.cy.elements().difference(element.connectedNodes()).not(element).addClass(this.state.viewSelector.value);
-                if (this.state.graphType === 'main') {
-                    if (!this.state.multiWindowState) this.createEdgeDetail(true); /** Edge Detail */
-                    else this.createEdgeDetail(false);
-                }
-                else {
-                    this.createEdgeDetail(true);
-                }
-            }
-            element.addClass('selected');
         }
+    }
+
+    renderTopologyView = () => {
+        var promise = new Promise((resolve, reject) => {
+            this.renderGraph();
+            resolve(this.state.currentSelectedElement);
+        })
+        promise.then((value) => {
+            try {
+                value.trigger('click');
+            } catch (e) {
+            }
+        })
+    }
+
+    renderSubgraphView = (prev) => {
+        var promise = new Promise((resolve, reject) => {
+            if (prev === `Map`) {
+                this.renderGraph();
+            }
+            resolve(this.state.currentSelectedElement);
+        })
+        promise.then((value) => {
+            try {
+                value.trigger('click');
+            } catch (e) {
+                this.renderGraph();
+            }
+        })
+    }
+
+    renderMapView = () => {
+        var focus = this.state.currentSelectedElement ? {lat: parseFloat(this.state.currentSelectedElement.data('lat')), lng: parseFloat(this.state.currentSelectedElement.data('lng'))}:{lat: 36.062269, lng: 140.135439}
+        var map = <GoogleMapReact
+            bootstrapURLKeys={{
+                key: "AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs",
+                language: 'en'
+            }}
+            defaultCenter={focus}
+            center = {focus}
+            defaultZoom={this.state.currentSelectedElement ? 15 : 0}
+            //defaultCenter={{ lat: 36.062269, lng: 140.135439 }}
+            //center={{ lat: 36.062269, lng: 140.135439 }}
+            //defaultZoom={0}
+        >
+            {this.cy.elements("node").map(node => {
+                return <button onClick={this.handleMakerClicked.bind(this, node)} id={node.data().id} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
+                    {node.data().label}
+                </button>
+            })}
+        </GoogleMapReact>
+        ReactDOM.render(map, document.getElementById("midArea"));
+    }
+
+    /** For test random lat lng  */
+    getRandomInRange(from, to, fixed) {
+        return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
     }
 
     /**
@@ -874,22 +933,7 @@ class Graph extends React.Component {
                         <OverlayTrigger rootClose={true} trigger="click" placement="right" overlay={
                             <Popover>
                                 <Popover.Title as="h3">IPOP Network Visualizer : View</Popover.Title>
-                                <Popover.Content id="configContent">
-                                    {/* <div className="row">
-                                        <div className="col">
-                                            <label>View</label>
-                                        </div>
-                                        <div className="col">
-                                            <select defaultValue={this.state.viewSelector} onChange={this.handleViewSelector} id="viewSelector">
-                                                <option value="Topology">Topology</option>
-                                                <option value="Subgraph">Subgraph</option>
-                                                <option value="Map">Map</option>
-                                                <option value="Log">Log</option>
-                                                <option value="NetworkFlow">NetworkFlow</option>
-                                                <option value="TunnelUtilization">TunnelUtilization</option>
-                                            </select>
-                                        </div>
-                                    </div> */}
+                                <Popover.Content id="viewContent">
                                     <div>
                                         <Select
                                             options={this.viewOptions}
@@ -912,10 +956,12 @@ class Graph extends React.Component {
                                             <label>Minimun zoom</label>
                                         </div>
                                         <div className="col">
-                                            <select defaultValue={this.state.setMinZoom} onChange={this.handleSetMinZoom} id="minZoomSelector" value={this.state.minZoom}>
-                                                <option id="0.2">0.2</option>
-                                                <option id="1">1</option>
-                                            </select>
+                                            <Select
+                                                options={this.miniZoom}
+                                                onChange={value => this.handleSetMinZoom(value)}
+                                                value={{ label: this.state.setMinZoom, value: this.state.minZoom }}
+                                                defaultValue={{ label: this.state.setMinZoom, value: this.state.setMinZoom }}
+                                            />
                                         </div>
                                     </div>
                                     <div className="row">
@@ -923,10 +969,12 @@ class Graph extends React.Component {
                                             <label>Maximum zoom</label>
                                         </div>
                                         <div className="col">
-                                            <select defaultValue={this.state.setMaxZoom} onChange={this.handleSetMaxZoom} id="maxZoomSelector" value={this.state.maxZoom}>
-                                                <option>2</option>
-                                                <option>5</option>
-                                            </select>
+                                            <Select
+                                                options={this.maxZoom}
+                                                onChange={value => this.handleSetMaxZoom(value)}
+                                                value={{ label: this.state.setMaxZoom, value: this.state.maxZoom }}
+                                                defaultValue={{ label: this.state.setMaxZoom, value: this.state.setMaxZoom }}
+                                            />
                                         </div>
                                     </div>
                                 </Popover.Content>
@@ -942,7 +990,7 @@ class Graph extends React.Component {
                         </div>
                         <button onClick={this.zoomOut} id="minusBtn"></button>
                     </div>
-                    <section id="midArea" className="col-9">
+                    <section onWheel={this.handleWheel} id="midArea" className="col-9">
                         {this.state.renderGraph ? (<></>) : (<div className="loader">Loading...</div>)}
                     </section>
                     <button onClick={this.toggleRightPanel} id="overlayRightPanelBtn" />

@@ -10,6 +10,7 @@
     "bootstrap": "^4.4.1",
     "css-loader": "^3.4.2",
     "cytoscape": "^3.13.0",
+    "google-map-react": "^1.1.6",
     "jquery": "^3.4.1",
     "node-sass": "^4.13.1",
     "react": "^16.12.0",
