@@ -18,7 +18,7 @@ class Tool extends React.Component {
 
     componentDidMount() {
         var packet = {
-            width: 1000,
+            width: 1200,
             height: 200,
             sage2w: 3840,
             sage2h: 2160,
@@ -52,17 +52,28 @@ class Tool extends React.Component {
                     window.SAGE2_AppState.callFunctionInContainer('set', packet);
                 })
                 break;
-            case 'info' :
-            var packet = {
-                name: `Info`,
-                data: {
-                    appName: `Legend`,
-                    url: `http://150.29.149.79:3000/info`,
-                    appId: `info`
+            case 'info':
+                var packet = {
+                    name: `Info`,
+                    data: {
+                        appName: `Legend`,
+                        url: `http://150.29.149.79:3000/info`,
+                        appId: `info`
+                    }
                 }
-            }
-            window.SAGE2_AppState.callFunctionInContainer(`open`,packet);
-            break;
+                window.SAGE2_AppState.callFunctionInContainer(`open`, packet);
+                break;
+            case 'map':
+                var packet = {
+                    name: 'MapView',
+                    data: {
+                        appName: `Map`,
+                        url: `http://150.29.149.79:3000/map`,
+                        appId: `map`
+                    }
+                }
+                window.SAGE2_AppState.callFunctionInContainer(`open`, packet);
+                break;
         }
     }
 
@@ -87,6 +98,7 @@ class Tool extends React.Component {
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('info')}><img src={info_ic} alt="info_ic" /></Button>
                 <Button type="button" variant="link" className=""><img src={rearrange_ic} alt="rearrange_ic" /></Button>
                 <Button variant="primary" onClick={(e) => this.handleOnClick('multi')}>{this.state.isMulti ? 'Multi-Window:ON' : 'Multi-Window:OFF'}</Button>
+                <Button variant="primary" onClick={(e) => this.handleOnClick('map')}>MapView</Button>
             </div>
         )
     }

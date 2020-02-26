@@ -289,7 +289,8 @@ header {
     border: none;
     height: 60px;
     outline: none;
-    background: url(../Images/Icons/view_ic.svg);
+    background: url(../Images/Icons/view_ic.svg) no-repeat;
+    background-size: cover;
 }
 
 #cy {
@@ -353,6 +354,7 @@ table.info {
 }
 
 .popover{
+    max-width: unset;
     font-size: 50px;
 }
 

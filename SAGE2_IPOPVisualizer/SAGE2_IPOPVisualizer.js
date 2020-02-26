@@ -44,15 +44,16 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 		//
 		this.children = new Array();
+		this.overlayChildren = new Array();
 		this.appName = ``;
 		this.appId = ``;
 		this.graphProperty = {
 			overlayId: ``,
 			graphType: ``,
 			selectedElementId: ``,
+			targetId: ``,
 			nodes: {},
 			links: {},
-			targetId: ``,
 		};
 		this.toolProperty = {
 			multiWindowState: false, /** Default state */
@@ -98,7 +99,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			console.log(`${ui.width},${ui.height}`);
 			this.element.src = 'http://150.29.149.79:3000/'; /* IP for React client server*/
 			this.appName = 'Tool';
-			this.appId = '0';
+			this.appId = 0;
 			this.updateTitle(`${this.title}: ${this.appName}`);
 		}
 	},
@@ -350,11 +351,11 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
-	normalizedWidth: function(standardSage2w,standardW){
+	normalizedWidth: function (standardSage2w, standardW) {
 		return parseInt((ui.width * standardW) / standardSage2w);
 	},
 
-	normalizedHeight: function(standardSage2h,standardH){
+	normalizedHeight: function (standardSage2h, standardH) {
 		return parseInt((ui.height * standardH) / standardSage2h);
 	},
 
@@ -401,6 +402,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 					appId: packet.targetId,
 				}
 				if (!this.children.includes(packet.targetId)) {
+					this.graphProperty.targetId = packet.targetId;
 					this.children.push(packet.targetId);
 					this.launchNewApp(messageSub);
 				}
@@ -571,8 +573,42 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
+	openMapView: function (packet) {
+		if (this.appId === 0) {
+			this.sendDataToChildrenApps(`openMapView`, packet);
+		}
+		else if(this.graphProperty.graphType === 'main'){
+			var message = {
+				appName: `${packet.appName} ${this.graphProperty.overlayId}`,
+				url: packet.url,
+				overlayId: this.graphProperty.overlayId,
+				graphType: `map`,
+				paramsType: `graph`,
+				nodes: this.graphProperty.nodes,
+				links: this.graphProperty.links,
+				appId: packet.appId,
+				targetId: this.graphProperty.targetId,
+			}
+			if(this.children.includes(message.appId)){
+				this.closeSpecificChild(message.appId);
+			}else{
+				this.children.push(message.appId);
+				this.launchNewApp(message);
+			}
+		}
+	},
+
 	sendSelectOption: function (packet) {
 		this.sendDataToParentApp(packet.passfunc, packet);
+	},
+
+	sendSelectNodeToMap: function (packet){
+		if(this.appId === packet.appId){
+			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);s
+		}
+		else{
+			this.sendDataToChildrenApps(`sendSelectNodeToMap`, packet)
+		}
 	},
 
 	selectOption: function (packet) {
@@ -588,11 +624,25 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);
 	},
 
+	closeSpecificChild: function (id) {
+		console.log(`${this.appId} : ${id}`);
+		if(this.appId === id){
+			this.close();
+		}
+		else{
+			this.sendDataToChildrenApps(`closeSpecificChild`, id);
+		}
+	},
+
 	handleCloseApplication: function (id) {
 		try {
 			if (this.children.includes(id)) {
 				var index = this.children.indexOf(id);
 				if (index !== -1) this.children.splice(index, 1);
+				if (this.overlayChildren.includes(id)) {
+					var index = this.overlayChildren.indexOf(id);
+					if (index !== -1) this.overlayChildren.splice(index, 1);
+				}
 			}
 			else {
 				this.sendDataToParentApp(`handleCloseApplication`, id);

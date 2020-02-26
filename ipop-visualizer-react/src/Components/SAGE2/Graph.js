@@ -35,7 +35,7 @@ class Graph extends React.Component {
         this.viewOptions = [
             { label: "Topology", value: "Topology" },
             { label: "Subgraph", value: "Subgraph" },
-            { label: "Map", value: "Map" },
+            // { label: "Map", value: "Map" },
         ]
         this.miniZoom = [
             { label: "0.2", value: "0.2" },
@@ -236,7 +236,7 @@ class Graph extends React.Component {
                     nodeList.push(JSON.parse(nodeJSON));
                 })
                 this.setState({ nodes: nodeList, links: linkList });
-                delete this.viewOptions[0]; /** Remove Topology view from Subgraph view select options. */
+                //delete this.viewOptions[0]; /** Remove Topology view from Subgraph view select options. */
                 resolve(true);
             }
             catch (e) {
@@ -549,6 +549,13 @@ class Graph extends React.Component {
                     type: 'subGraph',
                 }
                 if (this.state.multiWindowState) { window.SAGE2_AppState.callFunctionInContainer('openGraph', packet) };
+                var packet4map = {
+                    appId: `map`,
+                    nameOfComponent: `graphComponent`,
+                    callback: `handleSelectElement`,
+                    targetId: this.state.currentSelectedElement.data().id,
+                }
+                window.SAGE2_AppState.callFunctionInContainer(`sendSelectNodeToMap`, packet4map);
                 break;
             case 'sub':
                 if (this.state.currentSelectedElement) {
@@ -931,8 +938,8 @@ class Graph extends React.Component {
                     <div id="leftTools" className="col-1">
 
                         <OverlayTrigger rootClose={true} trigger="click" placement="right" overlay={
-                            <Popover>
-                                <Popover.Title as="h3">IPOP Network Visualizer : View</Popover.Title>
+                            <Popover >
+                                <Popover.Title style={{width:"500px",height:"200px", fontSize:"50px"}} as="h3">IPOP Network Visualizer : View</Popover.Title>
                                 <Popover.Content id="viewContent">
                                     <div>
                                         <Select
