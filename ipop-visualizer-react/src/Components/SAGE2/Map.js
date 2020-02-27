@@ -23,14 +23,25 @@ class Map extends React.Component {
         this.state = {
             nodes: [], links: [], initMinZoom: 0.2, initMaxZoom: 2, setMinZoom: 0.2, setMaxZoom: 2
             , renderGraph: false
-            , nodeDetails: null
-            , linkDetails: null
+            , currentSelectedElement: null
             , center: { lat: 35.6762, lng: 139.6503 }
             , zoom: 0
-            , targetId: null
             ,
 
         }
+        this.nodeLocations = {
+            a100001feb6040628e5fb7e70b04f001: [13.751769, 100.501287],
+            a100002feb6040628e5fb7e70b04f002: [29.639507, -82.317875],
+            a100003feb6040628e5fb7e70b04f003: [32.808629, 130.710253],
+            a100004feb6040628e5fb7e70b04f004: [35.723056, 140.826576],
+            a100005feb6040628e5fb7e70b04f005: [36.095354, 140.029521],
+            a100006feb6040628e5fb7e70b04f006: [30.613987, 104.068328],
+            a100007feb6040628e5fb7e70b04f007: [35.948014, 140.182366],
+            a100008feb6040628e5fb7e70b04f008: [21.120823, 79.103034],
+            a100009feb6040628e5fb7e70b04f009: [57.954472, 102.738448],
+            a100010feb6040628e5fb7e70b04f010: [36.062328, 140.135625],
+        }
+        this.googleMapReact = React.createRef();
         window.graphComponent = this;
     }
 
@@ -85,7 +96,7 @@ class Map extends React.Component {
                 Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
                     /** Test lat lng for map view. */
                     var [lat, lng] = [this.getRandomInRange(35.5, 36, 3), this.getRandomInRange(139.5, 140, 3)]
-                    var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${lat}", "lng":"${lng}"}}`
+                    var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${this.nodeLocations[node][0]}", "lng":"${this.nodeLocations[node][1]}"}}`
 
                     //var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}"}}`
                     var linkIds = Object.keys(packet.links[this.state.selectedOverlay]['current_state'][node]);
@@ -127,129 +138,140 @@ class Map extends React.Component {
     }
 
     handleMakerClicked = (node) => {
-        if(this.state.targetId){
-            var resetStyle = this.state.targetId;
-            this.setState({targetId:null}, () => {
-                document.getElementById(`${resetStyle}`).setAttribute('style','background-color:#8AA626;');
-            })
+        var packet = {
+            name: `SelectedFromMap`,
+            data: {
+                appId: `map`,
+                targetId: node.data().id,
+            }
         }
-        node.trigger('click');
+        window.SAGE2_AppState.callFunctionInContainer(`set`, packet);
+        this.resetAnimation(this.state.currentSelectedElement);
+        var center = { lat: parseFloat(node.data().lat), lng: parseFloat(node.data().lng) }
+        this.setState({ currentSelectedElement: node, center: center, zoom: 10 }, () => {
+            document.getElementById(`nodeMaker-${this.state.currentSelectedElement.data().id}`).classList.add(`selected`);
+        })
     }
 
     handleSelectElement = (id) => {
+        console.log('selected')
         try {
+            this.resetAnimation(this.state.currentSelectedElement);
             var element = this.cy.elements(`#${id}`);
             if (element.isNode()) {
                 var center = { lat: parseFloat(element.data().lat), lng: parseFloat(element.data().lng) }
-                var oldTargetId = this.state.targetId ? this.state.targetId : null;
-                this.setState({ center: center, targetId: id, zoom:10 }, () => {
-                    if(oldTargetId){
-                        document.getElementById(`${oldTargetId}`).setAttribute('style','background-color:#8AA626;');
+                this.setState({ center: center, zoom: 15, currentSelectedElement: element }, () => {
+                    document.getElementById(`nodeMaker-${element.data().id}`).classList.add(`selected`);
+                })
+            }
+            else {
+                var promise = new Promise((resolve, reject) => {
+                    var center = {};
+                    var zoom = 1;
+                    if (element.connectedNodes().length == 2) {
+                        var [lat1, lng1, lat2, lng2] = [element.connectedNodes()[0].data().lat, element.connectedNodes()[0].data().lng, element.connectedNodes()[1].data().lat, element.connectedNodes()[1].data().lng];
+                        var [lat, lng] = this.midpoint(parseFloat(lat1), parseFloat(lng1), parseFloat(lat2), parseFloat(lng2));
+                        center = { lat: lat, lng: lng };
+                        zoom = this.getZoomLevel(this.getDistanceBetweenPoints(lat1, lng1, lat2, lng2) * 0.001)
+                        console.log(`Distance in Kilometers: ${this.getDistanceBetweenPoints(lat1, lng1, lat2, lng2) * 0.001}`);
+                        resolve({center, zoom});
                     }
-                    var currentElement = document.getElementById(`${element.data().id}`);
-                    currentElement.setAttribute('style','background-color:aqua;');
-                    element.trigger('click');
-                    //document.getElementById(`${element.data().id}`).setAttribute('style','background-color:red;');
-                });
+                    else {
+                        reject('Error handleSelectElement > Edge connect more than 2 nodes.');
+                    }
+                })
+                promise.then((packet) => {
+                    this.setState({ center: packet.center, zoom: packet.zoom, currentSelectedElement: element }, () => {
+                        this.state.currentSelectedElement.connectedNodes().forEach((node) => {
+                            document.getElementById(`nodeMaker-${node.data().id}`).classList.add(`selected`);
+                        })
+                    })
+                }).catch((e) => {
+                    console.log(e)
+                })
             }
         } catch (e) {
-
+            console.log(`Error handleSelectElement > ${e}`)
         }
     }
 
-    eventClickNode = (node) => {
-        var sourceNode = this.state.ipop.getNodeDetails(node.data('id'));
-        var connectedNodes = this.cy.elements(node.incomers().union(node.outgoers())).filter((ele) => {
-            return ele.isNode();
-        })
-        this.setState({
-            nodeDetails: {
-                'sourceNode': sourceNode, 'connectedNodes': connectedNodes,
+    midpoint(lat1, lng1, lat2, lng2) {
+        lat1 = this.deg2rad(lat1);
+        lng1 = this.deg2rad(lng1);
+        lat2 = this.deg2rad(lat2);
+        lng2 = this.deg2rad(lng2);
+
+        var dlng = lng2 - lng1;
+        var Bx = Math.cos(lat2) * Math.cos(dlng);
+        var By = Math.cos(lat2) * Math.sin(dlng);
+        var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2),
+            Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
+        var lng3 = lng1 + Math.atan2(By, (Math.cos(lat1) + Bx));
+
+        return [(lat3 * 180) / Math.PI, (lng3 * 180) / Math.PI];
+    }
+
+    deg2rad(degrees) {
+        return degrees * Math.PI / 180;
+    };
+
+    getDistanceBetweenPoints = (lat1, lng1, lat2, lng2) => {
+        let R = 6378137 /** The radius of the planet earth in meters */
+        let dLat = this.deg2rad(lat2 - lat1);
+        let dLong = this.deg2rad(lng2 - lng1);
+        let a = Math.sin(dLat / 2)
+                *
+                Math.sin(dLat / 2)
+                +
+                Math.cos(this.deg2rad(lat1))
+                *
+                Math.cos(this.deg2rad(lat1))
+                *
+                Math.sin(dLong / 2)
+                *
+                Math.sin(dLong / 2)
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        let distance = R * c;
+        return distance;
+    }
+
+    getZoomLevel = (distance) =>{
+        var zoom;
+        if(distance > 0 && distance < 20){
+            zoom = 12;
+        }
+        else if(distance > 20 && distance < 100){
+            zoom = 10;
+        }
+        else if(distance > 100 && distance < 500){
+            zoom = 8;
+        }
+        else if(distance > 500 && distance < 1500){
+            zoom = 4;
+        }
+        else if(distance > 1500 && distance < 5000){
+            zoom = 2;
+        }
+        else{
+            zoom = 1;
+        }
+        return zoom;
+
+    }
+
+
+    resetAnimation = (element) => {
+        if (element) {
+            if (element.isNode()) {
+                document.getElementById(`nodeMaker-${element.data().id}`).classList.remove(`selected`);
             }
-        }, () => {
-            //this.createNodeDetail(true)
-        })
-    }
-
-    createNodeDetail = (flag) => {
-        var rightPanelContent;
-        if (flag) {
-            var sourceNode = this.state.nodeDetails.sourceNode;
-            var connectedNodes = this.state.nodeDetails.connectedNodes;
-            var ipop = this.state.ipop;
-            rightPanelContent = <div id="elementDetails">
-
-                <h2>{sourceNode.nodeName}</h2>
-
-                <div className="DetailsLabel">Node ID</div>
-                {sourceNode.nodeID}
-
-                <div className="DetailsLabel">State</div>
-                {sourceNode.nodeState}
-
-                <div className="DetailsLabel">City/Country</div>
-                {sourceNode.nodeLocation}
-                <br /><br />
-
-                <div id="connectedNode">
-                    {connectedNodes.map(connectedNode => {
-                        var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
-                        var connectedNodeBtn =
-                            <CollapseButton key={ipop.getNodeName(connectedNode.id()) + "Btn"} id={ipop.getNodeName(connectedNode.id()) + "Btn"} name={ipop.getNodeName(connectedNode.id())}>
-                                <div className="DetailsLabel">Node ID</div>
-                                {connectedNode.id()}
-                                <div className="DetailsLabel">Tunnel ID</div>
-                                {connectedNodeDetail.TunnelID}
-                                <div className="DetailsLabel">Interface Name</div>
-                                {connectedNodeDetail.InterfaceName}
-                                <div className="DetailsLabel">MAC</div>
-                                {connectedNodeDetail.MAC}
-                                <div className="DetailsLabel">State</div>
-                                {connectedNodeDetail.State}
-                                <div className="DetailsLabel">Tunnel Type</div>
-                                {connectedNodeDetail.TunnelType}
-                                <div className="DetailsLabel">ICE Connection Type</div>
-                                {connectedNodeDetail.ICEConnectionType}
-                                <div className="DetailsLabel">ICE Role</div>
-                                {connectedNodeDetail.ICERole}
-                                <div className="DetailsLabel">Remote Address</div>
-                                {connectedNodeDetail.RemoteAddress}
-                                <div className="DetailsLabel">Local Address</div>
-                                {connectedNodeDetail.LocalAddress}
-                                <div className="DetailsLabel">Latency</div>
-                                {connectedNodeDetail.Latency}
-                                <Card.Body className="transmissionCard">
-                                    Sent
-                                            <div className="DetailsLabel">Byte Sent</div>
-                                    -
-                                            <div className="DetailsLabel">Total Byte Sent</div>
-                                    {connectedNodeDetail.Stats[0].sent_total_bytes}
-                                </Card.Body>
-
-                                <Card.Body className="transmissionCard">
-                                    Received
-                                            <div className="DetailsLabel">Byte Received</div>
-                                    -
-                                            <div className="DetailsLabel">Total Byte Received</div>
-                                    {connectedNodeDetail.Stats[0].recv_total_bytes}
-                                </Card.Body>
-
-                            </CollapseButton>
-
-                        return connectedNodeBtn;
-                    })}
-                </div>
-
-            </div>
-            this.toggleRightPanel(false);
+            else {
+                element.connectedNodes().forEach((node) => {
+                    document.getElementById(`nodeMaker-${node.data().id}`).classList.remove(`selected`);
+                })
+            }
         }
-        else {
-            rightPanelContent = <div></div>
-            this.toggleRightPanel(true);
-        }
-        ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
-
 
     renderGraph = () => {
         ReactDOM.render(
@@ -257,14 +279,6 @@ class Map extends React.Component {
                 cy={(cy) => {
                     this.cy = cy;
                     var _this = this;
-                    this.cy.on('click', (event) => {
-                        if (event.target !== cy) {
-                            var element = event.target;
-                            if (element.isNode()) {
-                                _this.eventClickNode(element);
-                            }
-                        }
-                    })
                 }}
                 elements={Cytoscape.normalizeElements({
                     nodes: this.state.nodes,
@@ -330,13 +344,14 @@ class Map extends React.Component {
                                         key: "AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs",
                                         language: 'en'
                                     }}
-                                    defaultCenter={this.state.center}
+                                    //defaultCenter={this.state.center}
                                     center={this.state.center}
-                                    defaultZoom={this.state.zoom}
+                                    defaultZoom={1}
                                     zoom={this.state.zoom}
+                                    ref={this.googleMapReact}
                                 >
                                     {this.cy.elements("node").map(node => {
-                                        return <button ref={this.nodeMaker} onClick={this.handleMakerClicked.bind(this, node)} id={node.data().id} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
+                                        return <button ref={this.nodeMaker} onClick={this.handleMakerClicked.bind(this, node)} id={`nodeMaker-${node.data().id}`} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
                                             {node.data().label}
                                         </button>
                                     })}

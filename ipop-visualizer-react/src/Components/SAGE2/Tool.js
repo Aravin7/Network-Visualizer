@@ -5,6 +5,9 @@ import refresh_ic from '../../Images/Icons/IconToolPage/Refresh.svg';
 import search_ic from '../../Images/Icons/IconToolPage/Search.svg';
 import info_ic from '../../Images/Icons/IconToolPage/Info.svg';
 import rearrange_ic from '../../Images/Icons/IconToolPage/Rearrange.svg';
+import map_view_ic from '../../Images/Icons/IconToolPage/map_view_ic.svg';
+import multi_ic from '../../Images/Icons/IconToolPage/multi_ic.svg';
+import single_ic from '../../Images/Icons/IconToolPage/single_ic.svg';
 import "../../CSS/SAGE2.css";
 
 class Tool extends React.Component {
@@ -97,8 +100,8 @@ class Tool extends React.Component {
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('search')}><img src={search_ic} alt="search_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('info')}><img src={info_ic} alt="info_ic" /></Button>
                 <Button type="button" variant="link" className=""><img src={rearrange_ic} alt="rearrange_ic" /></Button>
-                <Button variant="primary" onClick={(e) => this.handleOnClick('multi')}>{this.state.isMulti ? 'Multi-Window:ON' : 'Multi-Window:OFF'}</Button>
-                <Button variant="primary" onClick={(e) => this.handleOnClick('map')}>MapView</Button>
+                <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('multi')}><img src={this.state.isMulti ? multi_ic : single_ic} alt="multi_ic" /></Button>
+                <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('map')}><img src={map_view_ic} alt="map_view_ic" /></Button>
             </div>
         )
     }

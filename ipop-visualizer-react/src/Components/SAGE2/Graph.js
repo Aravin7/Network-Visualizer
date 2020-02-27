@@ -45,6 +45,18 @@ class Graph extends React.Component {
             { label: "2", value: "2" },
             { label: "5", value: "5" },
         ]
+        this.nodeLocations = {
+            a100001feb6040628e5fb7e70b04f001: [13.751769, 100.501287],
+            a100002feb6040628e5fb7e70b04f002: [29.639507, -82.317875],
+            a100003feb6040628e5fb7e70b04f003: [32.808629, 130.710253],
+            a100004feb6040628e5fb7e70b04f004: [35.723056, 140.826576],
+            a100005feb6040628e5fb7e70b04f005: [36.095354, 140.029521],
+            a100006feb6040628e5fb7e70b04f006: [30.613987, 104.068328],
+            a100007feb6040628e5fb7e70b04f007: [35.948014, 140.182366],
+            a100008feb6040628e5fb7e70b04f008: [21.120823, 79.103034],
+            a100009feb6040628e5fb7e70b04f009: [57.954472, 102.738448],
+            a100010feb6040628e5fb7e70b04f010: [36.062328, 140.135625],
+        }
         window.graphComponent = this;
     }
 
@@ -204,7 +216,7 @@ class Graph extends React.Component {
                 Object.keys(packet.nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
                     /** Test lat lng for map view. */
                     var [lat, lng] = [this.getRandomInRange(34, 40, 3), this.getRandomInRange(132, 140, 3)]
-                    var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${lat}", "lng":"${lng}"}}`
+                    var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${this.nodeLocations[node][0]}", "lng":"${this.nodeLocations[node][1]}"}}`
 
                     //var nodeJSON = `{ "data": { "id": "${node}", "label": "${packet.nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}"}}`
                     var linkIds = Object.keys(packet.links[this.state.selectedOverlay]['current_state'][node]);
@@ -257,77 +269,79 @@ class Graph extends React.Component {
             var sourceNode = this.state.nodeDetails.sourceNode;
             var connectedNodes = this.state.nodeDetails.connectedNodes;
             var ipop = this.state.ipop;
-            rightPanelContent = <div id="elementDetails">
-
-                <h2>{sourceNode.nodeName}</h2>
-
-                <div className="DetailsLabel">Node ID</div>
-                {sourceNode.nodeID}
-
-                <div className="DetailsLabel">State</div>
-                {sourceNode.nodeState}
-
-                <div className="DetailsLabel">City/Country</div>
-                {sourceNode.nodeLocation}
-                <br /><br />
-
-                <div id="connectedNode">
-                    {connectedNodes.map(connectedNode => {
-                        var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
-                        var connectedNodeBtn =
-                            <CollapseButton key={ipop.getNodeName(connectedNode.id()) + "Btn"} id={ipop.getNodeName(connectedNode.id()) + "Btn"} name={ipop.getNodeName(connectedNode.id())}>
-                                <div className="DetailsLabel">Node ID</div>
-                                {connectedNode.id()}
-                                <div className="DetailsLabel">Tunnel ID</div>
-                                {connectedNodeDetail.TunnelID}
-                                <div className="DetailsLabel">Interface Name</div>
-                                {connectedNodeDetail.InterfaceName}
-                                <div className="DetailsLabel">MAC</div>
-                                {connectedNodeDetail.MAC}
-                                <div className="DetailsLabel">State</div>
-                                {connectedNodeDetail.State}
-                                <div className="DetailsLabel">Tunnel Type</div>
-                                {connectedNodeDetail.TunnelType}
-                                <div className="DetailsLabel">ICE Connection Type</div>
-                                {connectedNodeDetail.ICEConnectionType}
-                                <div className="DetailsLabel">ICE Role</div>
-                                {connectedNodeDetail.ICERole}
-                                <div className="DetailsLabel">Remote Address</div>
-                                {connectedNodeDetail.RemoteAddress}
-                                <div className="DetailsLabel">Local Address</div>
-                                {connectedNodeDetail.LocalAddress}
-                                <div className="DetailsLabel">Latency</div>
-                                {connectedNodeDetail.Latency}
-                                <Card.Body className="transmissionCard">
-                                    Sent
+            fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${this.nodeLocations[sourceNode.nodeID][0]},${this.nodeLocations[sourceNode.nodeID][1]}&key=AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs&language=en`)
+                .then(res => res.json()).then((data) => {
+                    return data.results[data.results.length-3].formatted_address;
+                }).then((location) => {
+                    rightPanelContent = <div id="elementDetails">
+                        <h2>{sourceNode.nodeName}</h2>
+                        <div className="DetailsLabel">Node ID</div>
+                        {sourceNode.nodeID}
+                        <div className="DetailsLabel">State</div>
+                        {sourceNode.nodeState}
+                        <div className="DetailsLabel">City/Country</div>
+                        {location}
+                        <br /><br />
+                        <div id="connectedNode">
+                            {connectedNodes.map(connectedNode => {
+                                var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
+                                var connectedNodeBtn =
+                                    <CollapseButton key={ipop.getNodeName(connectedNode.id()) + "Btn"} id={ipop.getNodeName(connectedNode.id()) + "Btn"} name={ipop.getNodeName(connectedNode.id())}>
+                                        <div className="DetailsLabel">Node ID</div>
+                                        {connectedNode.id()}
+                                        <div className="DetailsLabel">Tunnel ID</div>
+                                        {connectedNodeDetail.TunnelID}
+                                        <div className="DetailsLabel">Interface Name</div>
+                                        {connectedNodeDetail.InterfaceName}
+                                        <div className="DetailsLabel">MAC</div>
+                                        {connectedNodeDetail.MAC}
+                                        <div className="DetailsLabel">State</div>
+                                        {connectedNodeDetail.State}
+                                        <div className="DetailsLabel">Tunnel Type</div>
+                                        {connectedNodeDetail.TunnelType}
+                                        <div className="DetailsLabel">ICE Connection Type</div>
+                                        {connectedNodeDetail.ICEConnectionType}
+                                        <div className="DetailsLabel">ICE Role</div>
+                                        {connectedNodeDetail.ICERole}
+                                        <div className="DetailsLabel">Remote Address</div>
+                                        {connectedNodeDetail.RemoteAddress}
+                                        <div className="DetailsLabel">Local Address</div>
+                                        {connectedNodeDetail.LocalAddress}
+                                        <div className="DetailsLabel">Latency</div>
+                                        {connectedNodeDetail.Latency}
+                                        <Card.Body className="transmissionCard">
+                                            Sent
                                             <div className="DetailsLabel">Byte Sent</div>
-                                    -
+                                            -
                                             <div className="DetailsLabel">Total Byte Sent</div>
-                                    {connectedNodeDetail.Stats[0].sent_total_bytes}
-                                </Card.Body>
-
-                                <Card.Body className="transmissionCard">
-                                    Received
+                                            {connectedNodeDetail.Stats[0].sent_total_bytes}
+                                        </Card.Body>
+                                        <Card.Body className="transmissionCard">
+                                            Received
                                             <div className="DetailsLabel">Byte Received</div>
-                                    -
+                                            -
                                             <div className="DetailsLabel">Total Byte Received</div>
-                                    {connectedNodeDetail.Stats[0].recv_total_bytes}
-                                </Card.Body>
+                                            {connectedNodeDetail.Stats[0].recv_total_bytes}
+                                        </Card.Body>
+                                    </CollapseButton>
+                                return connectedNodeBtn;
+                            })}
+                        </div>
+                    </div>
+                    this.toggleRightPanel(false);
 
-                            </CollapseButton>
-
-                        return connectedNodeBtn;
-                    })}
-                </div>
-
-            </div>
-            this.toggleRightPanel(false);
+                }).then(() => {
+                    ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
+                }).catch( (e) => {
+                    console.log(`Error createNodeDetail > ${e}`);
+                })
         }
         else {
             rightPanelContent = <div></div>
             this.toggleRightPanel(true);
+            ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
         }
-        ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
+        //ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
     }
 
     /**
@@ -481,7 +495,7 @@ class Graph extends React.Component {
                         Object.keys(nodes[this.state.selectedOverlay]['current_state']).sort().forEach(node => {
                             /** Test lat lng for map view. */
                             var [lat, lng] = [this.getRandomInRange(34, 40, 3), this.getRandomInRange(132, 140, 3)]
-                            var nodeJSON = `{ "data": { "id": "${node}", "label": "${nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${lat}", "lng":"${lng}"}}`
+                            var nodeJSON = `{ "data": { "id": "${node}", "label": "${nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${this.nodeLocations[node][0]}", "lng":"${this.nodeLocations[node][1]}"}}`
 
                             // var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
                             var linkIds = Object.keys(links[this.state.selectedOverlay]['current_state'][node]);
@@ -810,6 +824,7 @@ class Graph extends React.Component {
                     this.cy.center();
                     this.cy.on('click', (event) => {
                         if (event.target !== cy) {
+                            console.log(`${this.state.graphType}:click!!`)
                             /** reset style */
                             cy.elements().removeClass(this.state.viewSelector.value);
                             cy.elements().removeClass('selected');
@@ -899,29 +914,6 @@ class Graph extends React.Component {
         })
     }
 
-    renderMapView = () => {
-        var focus = this.state.currentSelectedElement ? {lat: parseFloat(this.state.currentSelectedElement.data('lat')), lng: parseFloat(this.state.currentSelectedElement.data('lng'))}:{lat: 36.062269, lng: 140.135439}
-        var map = <GoogleMapReact
-            bootstrapURLKeys={{
-                key: "AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs",
-                language: 'en'
-            }}
-            defaultCenter={focus}
-            center = {focus}
-            defaultZoom={this.state.currentSelectedElement ? 15 : 0}
-            //defaultCenter={{ lat: 36.062269, lng: 140.135439 }}
-            //center={{ lat: 36.062269, lng: 140.135439 }}
-            //defaultZoom={0}
-        >
-            {this.cy.elements("node").map(node => {
-                return <button onClick={this.handleMakerClicked.bind(this, node)} id={node.data().id} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
-                    {node.data().label}
-                </button>
-            })}
-        </GoogleMapReact>
-        ReactDOM.render(map, document.getElementById("midArea"));
-    }
-
     /** For test random lat lng  */
     getRandomInRange(from, to, fixed) {
         return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
@@ -939,7 +931,7 @@ class Graph extends React.Component {
 
                         <OverlayTrigger rootClose={true} trigger="click" placement="right" overlay={
                             <Popover >
-                                <Popover.Title style={{width:"500px",height:"200px", fontSize:"50px"}} as="h3">IPOP Network Visualizer : View</Popover.Title>
+                                <Popover.Title as="h3">IPOP Network Visualizer : View</Popover.Title>
                                 <Popover.Content id="viewContent">
                                     <div>
                                         <Select

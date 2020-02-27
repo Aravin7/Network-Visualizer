@@ -520,6 +520,24 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
+	setSelectedFromMap: function (packet) {
+		if (this.children.includes(packet.appId)) {
+			try {
+				var message = {
+					nameOfComponent: `graphComponent`,
+					callback: `handleSelectCyElement`,
+					targetId: packet.targetId,
+				}
+				this.selectCyElement(message);
+			} catch (e) {
+				console.log(`Error setSelectedFromMap > ${e}`)
+			}
+		}
+		else{
+			this.sendDataToParentApp(`setSelectedFromMap`, packet)
+		}
+	},
+
 	setWindowSizeAndPosition: function (packet) {
 
 	},
@@ -577,7 +595,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		if (this.appId === 0) {
 			this.sendDataToChildrenApps(`openMapView`, packet);
 		}
-		else if(this.graphProperty.graphType === 'main'){
+		else if (this.graphProperty.graphType === 'main') {
 			var message = {
 				appName: `${packet.appName} ${this.graphProperty.overlayId}`,
 				url: packet.url,
@@ -589,9 +607,9 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				appId: packet.appId,
 				targetId: this.graphProperty.targetId,
 			}
-			if(this.children.includes(message.appId)){
+			if (this.children.includes(message.appId)) {
 				this.closeSpecificChild(message.appId);
-			}else{
+			} else {
 				this.children.push(message.appId);
 				this.launchNewApp(message);
 			}
@@ -602,11 +620,11 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.sendDataToParentApp(packet.passfunc, packet);
 	},
 
-	sendSelectNodeToMap: function (packet){
-		if(this.appId === packet.appId){
-			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);s
+	sendSelectNodeToMap: function (packet) {
+		if (this.appId === packet.appId) {
+			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId); s
 		}
-		else{
+		else {
 			this.sendDataToChildrenApps(`sendSelectNodeToMap`, packet)
 		}
 	},
@@ -626,10 +644,10 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 	closeSpecificChild: function (id) {
 		console.log(`${this.appId} : ${id}`);
-		if(this.appId === id){
+		if (this.appId === id) {
 			this.close();
 		}
-		else{
+		else {
 			this.sendDataToChildrenApps(`closeSpecificChild`, id);
 		}
 	},

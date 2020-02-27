@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="157" viewBox="0 0 140 157">
+  <defs>
+    <filter id="Rectangle_1021" x="0" y="0" width="140" height="140" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-opacity="0.251"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Group_228" data-name="Group 228" transform="translate(10 7)">
+    <g transform="matrix(1, 0, 0, 1, -10, -7)" filter="url(#Rectangle_1021)">
+      <g id="Rectangle_1021-2" data-name="Rectangle 1021" transform="translate(10 7)" fill="#213758" stroke="#405b80" stroke-width="1">
+        <rect width="120" height="120" rx="6" stroke="none"/>
+        <rect x="-0.5" y="-0.5" width="121" height="121" rx="6.5" fill="none"/>
+      </g>
+    </g>
+    <g id="Group_217" data-name="Group 217" transform="translate(16 -20)">
+      <g id="Group_226" data-name="Group 226" transform="translate(7 47.895)">
+        <g id="Group_227" data-name="Group 227">
+          <rect id="Rectangle_1097" data-name="Rectangle 1097" width="48.054" height="34.948" rx="1" fill="#8fa7c7"/>
+          <rect id="Rectangle_1095" data-name="Rectangle 1095" width="35" height="26" rx="1" transform="translate(0 37.105)" fill="#8fa7c7"/>
+          <rect id="Rectangle_1098" data-name="Rectangle 1098" width="37.133" height="26.211" rx="1" transform="translate(37.572 37.37)" fill="#8fa7c7"/>
+          <rect id="Rectangle_1099" data-name="Rectangle 1099" width="24.027" height="34.948" rx="1" transform="translate(50.678)" fill="#8fa7c7"/>
+        </g>
+      </g>
+    </g>
+    <text id="Multi-window" transform="translate(60 145)" fill="#fff" font-size="22" font-family="Tahoma"><tspan x="-64.34" y="0">Multi-window</tspan></text>
+  </g>
+</svg>
