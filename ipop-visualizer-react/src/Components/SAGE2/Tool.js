@@ -40,6 +40,7 @@ class Tool extends React.Component {
                     data: {
                         url: 'http://150.29.149.79:3000/search', /* IP for direct to React client server.*/
                         appName: 'search',
+                        appId: `search`,
                     }
                 }
                 window.SAGE2_AppState.callFunctionInContainer('open', packet);

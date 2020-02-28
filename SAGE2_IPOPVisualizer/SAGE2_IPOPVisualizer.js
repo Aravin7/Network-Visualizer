@@ -40,6 +40,8 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.element.partition = data.id;
 		this.zoomFactor = 1;
 		this.autoRefresh = null;
+		this.position_x = 0;
+		this.position_y = 0;
 		var _this = this;
 
 		//
@@ -102,6 +104,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.appId = 0;
 			this.updateTitle(`${this.title}: ${this.appName}`);
 		}
+
 	},
     /**
 	 * Determines if electron is the renderer (instead of a browser)
@@ -323,8 +326,10 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		if (isMaster && this.hasFileBuffer === true) {
 			wsio.emit('closeFileBuffer', { id: this.div.id });
 		}
+		/** Add from original source code */
 		this.handleCloseApplication(this.appId);
 		this.terminateChildren();
+
 		SAGE2RemoteSitePointer.appQuitHidePointers(this);
 		this.serverDataRemoveAllValuesGivenToServer();
 	},
@@ -341,13 +346,43 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.close();
 	},
 
-	setWindowSize: function (packet) {
+	setWindowSizeAndPosition: function (packet) {
 		if (packet.hasOwnProperty('sage2w')) {
 			var [width, height] = [this.normalizedWidth(packet.sage2w, packet.width), this.normalizedHeight(packet.sage2h, packet.height)]
 			console.log('width:' + width)
 			this.sendResize(width, height);
 		} else {
 			this.sendResize(packet.width, packet.height);
+		}
+	},
+
+	setWindowSize: function (packet) {
+		var _this = this;
+		if (packet.hasOwnProperty('sage2w')) {
+			var [width, height] = [this.normalizedWidth(packet.sage2w, packet.width), this.normalizedHeight(packet.sage2h, packet.height)]
+			console.log('width:' + width)
+			//this.sendResize(width, height);
+
+			var posAdjust = {};
+			posAdjust.appPositionAndSize = {};
+			posAdjust.appPositionAndSize.elemId = _this.id;
+			posAdjust.appPositionAndSize.elemLeft = this.graphProperty.graphType === 'main' ? (ui.width / 2) - (width / 2) : this.sage2_x;
+			posAdjust.appPositionAndSize.elemTop = this.graphProperty.graphType === 'main' ? 0 : this.sage2_y;
+			posAdjust.appPositionAndSize.elemHeight = height;
+			posAdjust.appPositionAndSize.elemWidth = width;
+
+			wsio.emit("updateApplicationPositionAndSize", posAdjust);
+		} else {
+			//this.sendResize(packet.width, packet.height);
+			var posAdjust = {};
+			posAdjust.appPositionAndSize = {};
+			posAdjust.appPositionAndSize.elemId = _this.id;
+			posAdjust.appPositionAndSize.elemLeft = 0;
+			posAdjust.appPositionAndSize.elemTop = this.appId === 0 ? 0 : 300;
+			posAdjust.appPositionAndSize.elemHeight = packet.height;
+			posAdjust.appPositionAndSize.elemWidth = packet.width;
+
+			wsio.emit("updateApplicationPositionAndSize", posAdjust);
 		}
 	},
 
@@ -360,7 +395,52 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	},
 
 	launchNewApp: function (packet) {
-		this.launchAppWithValues(this.title, packet, 200, 0);
+		if (this.graphProperty.graphType === 'main') {
+			let [position_x, position_y] = [0, 0];
+			switch (packet.graphType) {
+				case 'map':
+					position_x = this.sage2_x + this.sage2_width + 100;
+					position_y = 0;
+					break;
+				case 'sub':
+					if (Array.isArray(this.children) && this.children.length) {
+						var childtemp = Array.from(this.children);
+						childtemp = childtemp.filter((child) => {
+							return child !== 'map';
+						})
+						if (Array.isArray(childtemp) && childtemp.length) {
+							var prevChild = childtemp.pop();
+							for (var i = 0; i < this.childrenAppIds.length; i++) {
+								try {
+									if (applications[this.childrenAppIds[i]].appId === prevChild) {
+										var tempObj = applications[this.childrenAppIds[i]];
+										position_x = tempObj.sage2_x + tempObj.sage2_width + 100;
+										position_y = this.sage2_y + this.sage2_height + 100;
+										break;
+									}
+								}
+								catch (error) {
+									console.log("terminateChildren: " + error);
+								}
+							}
+						}
+						else {
+							position_x = 0;
+							position_y = this.sage2_y + this.sage2_height + 100;
+						}
+					}
+					else {
+						position_x = 0;
+						position_y = this.sage2_y + this.sage2_height + 100;
+					}
+					this.children.push(packet.targetId);
+					break;
+			}
+			this.launchAppWithValues(this.title, packet, position_x, position_y);
+
+		} else {
+			this.launchAppWithValues(this.title, packet, 0, 0);
+		}
 	},
 
 	callFunctionInComponent: function (nameOfComponent, nameOfFunction, value) {
@@ -403,7 +483,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				}
 				if (!this.children.includes(packet.targetId)) {
 					this.graphProperty.targetId = packet.targetId;
-					this.children.push(packet.targetId);
+					//this.children.push(packet.targetId);
 					this.launchNewApp(messageSub);
 				}
 				break;
@@ -533,13 +613,9 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				console.log(`Error setSelectedFromMap > ${e}`)
 			}
 		}
-		else{
+		else {
 			this.sendDataToParentApp(`setSelectedFromMap`, packet)
 		}
-	},
-
-	setWindowSizeAndPosition: function (packet) {
-
 	},
 
 	request: function (packet) {
@@ -569,13 +645,17 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 	openSearch: function (packet) {
 		if (!this.children.includes('search')) {
-			this.children.push('search');
+			this.children.push(packet.appId);
 			var message = {
 				appName: packet.appName,
 				url: packet.url,
 				options: this.cyElement,
+				appId: `search`
 			}
 			this.launchNewApp(message);
+		}
+		else {
+			this.closeSpecificChild(packet.appId);
 		}
 	},
 
@@ -588,6 +668,9 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			}
 			this.children.push(packet.appId);
 			this.launchNewApp(message);
+		}
+		else {
+			this.closeSpecificChild(packet.appId)
 		}
 	},
 
@@ -643,7 +726,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	},
 
 	closeSpecificChild: function (id) {
-		console.log(`${this.appId} : ${id}`);
 		if (this.appId === id) {
 			this.close();
 		}
