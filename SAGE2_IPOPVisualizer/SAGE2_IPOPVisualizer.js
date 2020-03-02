@@ -111,6 +111,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.appId = 0;
 			this.updateTitle(`${this.title}: ${this.appName}`);
 		}
+
 	},
     /**
 	 * Determines if electron is the renderer (instead of a browser)
@@ -372,10 +373,10 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				x = (ui.width / 2) - (width / 2);
 				y = 0;
 			}
-			else if(this.graphProperty.graphType === 'sub' || this.graphProperty.graphType === 'map'){
+			else if (this.graphProperty.graphType === 'sub' || this.graphProperty.graphType === 'map') {
 				[x, y] = [this.sage2_x, this.sage2_y];
 			}
-			else{
+			else {
 				[x, y] = [0, 300];
 			}
 			this.defaultPosition = {
@@ -465,55 +466,57 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 					/** New version */
 					try {
-						var childtemp = Array.from(this.children);
-						childtemp = childtemp.filter((child) => {
-							return child !== 'map';
-						})
-						if (childtemp.includes(null)) {
-							childtemp = childtemp.slice(0, childtemp.indexOf(null));
-						}
-						var indexCase = childtemp.length % 5;
-						var prevChild = null;
-						const gapBetweenSub = 100;
-						if (indexCase > 0) {
-							prevChild = childtemp.pop();
-							for (var i = 0; i < this.childrenAppIds.length; i++) {
-								try {
-									if (applications[this.childrenAppIds[i]].appId === prevChild) {
-										console.log(`Child AppId: ${applications[this.childrenAppIds[i]].appId} prevAppId:${prevChild}`);
-										var tempObj = applications[this.childrenAppIds[i]];
-										prevChild = tempObj;
-										break;
+						if (Array.isArray(this.children) && this.children.length) {
+							var childtemp = Array.from(this.children);
+							childtemp = childtemp.filter((child) => {
+								return child !== 'map';
+							})
+							if (childtemp.includes(null)) {
+								childtemp = childtemp.slice(0, childtemp.indexOf(null));
+							}
+							var indexCase = childtemp.length % 5;
+							var prevChild = null;
+							const gapBetweenSub = 100;
+							if (indexCase > 0) {
+								prevChild = childtemp.pop();
+								for (var i = 0; i < this.childrenAppIds.length; i++) {
+									try {
+										if (applications[this.childrenAppIds[i]].appId === prevChild) {
+											console.log(`Child AppId: ${applications[this.childrenAppIds[i]].appId} prevAppId:${prevChild}`);
+											var tempObj = applications[this.childrenAppIds[i]];
+											prevChild = tempObj;
+											break;
+										}
+									}
+									catch (error) {
+										console.log(`Error func LaunchNewApp get prevChild > ${error.message}`);
 									}
 								}
-								catch (error) {
-									console.log(`Error func LaunchNewApp get prevChild > ${error.message}`);
-								}
 							}
-						}
 
-						/** Set position from sub graph from index in array */
-						switch (indexCase) {
-							case 0: /** left  */
-								position_x = 0;
-								position_y = 200;
-								break;
-							case 1: /** bottom left */
-								position_x = 0;
-								position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
-								break;
-							case 2: /** bottom middle */
-								position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
-								position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
-								break;
-							case 3: /** bottom right */
-								position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
-								position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
-								break;
-							case 4:
-								position_x = this.sage2_x + this.sage2_width + gapBetweenSub;
-								position_y = 200;
-								break;
+							/** Set position from sub graph from index in array */
+							switch (indexCase) {
+								case 0: /** left  */
+									position_x = 0;
+									position_y = 200;
+									break;
+								case 1: /** bottom left */
+									position_x = 0;
+									position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
+									break;
+								case 2: /** bottom middle */
+									position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
+									position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
+									break;
+								case 3: /** bottom right */
+									position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
+									position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
+									break;
+								case 4:
+									position_x = this.sage2_x + this.sage2_width + gapBetweenSub;
+									position_y = 200;
+									break;
+							}
 						}
 					} catch (e) {
 						console.log(`Error func LaunchNewApp > ${e.message}`);
