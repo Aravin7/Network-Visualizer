@@ -44,9 +44,8 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.position_y = 0;
 		var _this = this;
 
-		//
+		/** Set property for each app */
 		this.children = new Array();
-		this.overlayChildren = new Array();
 		this.appName = ``;
 		this.appId = ``;
 		this.graphProperty = {
@@ -60,6 +59,10 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		this.toolProperty = {
 			multiWindowState: false, /** Default state */
 		}
+		this.defaultPosition = {
+			x: 0,
+			y: 0,
+		}
 		this.cyElement = {};
 
 		this.element.addEventListener('new-window', (event) => {
@@ -67,7 +70,11 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				// _this.newWindow(event.url);
 				//console.log(JSON.stringify(event));
 				this.launchAppWithValues(_this.title, {
-					url: event.url
+					url: event.url,
+					defaultPosition: {
+						x: 500,
+						y: 500,
+					}
 				}, 500, 500)
 			} else {
 				console.log('Webview>	Not a HTTP URL, not opening [', event.url, ']', event);
@@ -104,7 +111,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.appId = 0;
 			this.updateTitle(`${this.title}: ${this.appName}`);
 		}
-
 	},
     /**
 	 * Determines if electron is the renderer (instead of a browser)
@@ -360,25 +366,45 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		var _this = this;
 		if (packet.hasOwnProperty('sage2w')) {
 			var [width, height] = [this.normalizedWidth(packet.sage2w, packet.width), this.normalizedHeight(packet.sage2h, packet.height)]
-			console.log('width:' + width)
 			//this.sendResize(width, height);
-
+			var [x, y] = [this.sage2_x, this.sage2_y];
+			if (this.graphProperty.graphType === 'main') {
+				x = (ui.width / 2) - (width / 2);
+				y = 0;
+			}
+			else if(this.graphProperty.graphType === 'sub' || this.graphProperty.graphType === 'map'){
+				[x, y] = [this.sage2_x, this.sage2_y];
+			}
+			else{
+				[x, y] = [0, 300];
+			}
+			this.defaultPosition = {
+				x: x,
+				y: y,
+			}
 			var posAdjust = {};
 			posAdjust.appPositionAndSize = {};
 			posAdjust.appPositionAndSize.elemId = _this.id;
-			posAdjust.appPositionAndSize.elemLeft = this.graphProperty.graphType === 'main' ? (ui.width / 2) - (width / 2) : this.sage2_x;
-			posAdjust.appPositionAndSize.elemTop = this.graphProperty.graphType === 'main' ? 0 : this.sage2_y;
+			posAdjust.appPositionAndSize.elemLeft = x;
+			posAdjust.appPositionAndSize.elemTop = y;
 			posAdjust.appPositionAndSize.elemHeight = height;
 			posAdjust.appPositionAndSize.elemWidth = width;
-
 			wsio.emit("updateApplicationPositionAndSize", posAdjust);
 		} else {
 			//this.sendResize(packet.width, packet.height);
+			var [x, y] = [0, 300];
+			if (this.appId === 0) {
+				y = 0;
+			}
+			this.defaultPosition = {
+				x: x,
+				y: y,
+			}
 			var posAdjust = {};
 			posAdjust.appPositionAndSize = {};
 			posAdjust.appPositionAndSize.elemId = _this.id;
-			posAdjust.appPositionAndSize.elemLeft = 0;
-			posAdjust.appPositionAndSize.elemTop = this.appId === 0 ? 0 : 300;
+			posAdjust.appPositionAndSize.elemLeft = x;
+			posAdjust.appPositionAndSize.elemTop = y;
 			posAdjust.appPositionAndSize.elemHeight = packet.height;
 			posAdjust.appPositionAndSize.elemWidth = packet.width;
 
@@ -403,38 +429,107 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 					position_y = 0;
 					break;
 				case 'sub':
-					if (Array.isArray(this.children) && this.children.length) {
+					/** Old version */
+					// if (Array.isArray(this.children) && this.children.length) {
+					// 	var childtemp = Array.from(this.children);
+					// 	childtemp = childtemp.filter((child) => {
+					// 		return child !== 'map';
+					// 	})
+					// 	console.log(`Mod: ${childtemp.length % 5}`)
+					// 	if (Array.isArray(childtemp) && childtemp.length) {
+					// 		var prevChild = childtemp.pop();
+					// 		for (var i = 0; i < this.childrenAppIds.length; i++) {
+					// 			try {
+					// 				if (applications[this.childrenAppIds[i]].appId === prevChild) {
+					// 					var tempObj = applications[this.childrenAppIds[i]];
+					// 					position_x = tempObj.sage2_x + tempObj.sage2_width + 100;
+					// 					position_y = this.sage2_y + this.sage2_height + 100;
+					// 					break;
+					// 				}
+					// 			}
+					// 			catch (error) {
+					// 				console.log(`Error func LaunchNewApp > ${error.message}`);
+					// 			}
+					// 		}
+					// 	}
+					// 	else {
+					// 		position_x = 0;
+					// 		position_y = this.sage2_y + this.sage2_height + 100;
+					// 	}
+					// }
+					// else {
+					// 	position_x = 0;
+					// 	position_y = this.sage2_y + this.sage2_height + 100;
+					// }
+					// this.children.push(packet.targetId);
+
+					/** New version */
+					try {
 						var childtemp = Array.from(this.children);
 						childtemp = childtemp.filter((child) => {
 							return child !== 'map';
 						})
-						if (Array.isArray(childtemp) && childtemp.length) {
-							var prevChild = childtemp.pop();
+						if (childtemp.includes(null)) {
+							childtemp = childtemp.slice(0, childtemp.indexOf(null));
+						}
+						var indexCase = childtemp.length % 5;
+						var prevChild = null;
+						const gapBetweenSub = 100;
+						if (indexCase > 0) {
+							prevChild = childtemp.pop();
 							for (var i = 0; i < this.childrenAppIds.length; i++) {
 								try {
 									if (applications[this.childrenAppIds[i]].appId === prevChild) {
+										console.log(`Child AppId: ${applications[this.childrenAppIds[i]].appId} prevAppId:${prevChild}`);
 										var tempObj = applications[this.childrenAppIds[i]];
-										position_x = tempObj.sage2_x + tempObj.sage2_width + 100;
-										position_y = this.sage2_y + this.sage2_height + 100;
+										prevChild = tempObj;
 										break;
 									}
 								}
 								catch (error) {
-									console.log("terminateChildren: " + error);
+									console.log(`Error func LaunchNewApp get prevChild > ${error.message}`);
 								}
 							}
 						}
-						else {
-							position_x = 0;
-							position_y = this.sage2_y + this.sage2_height + 100;
+
+						/** Set position from sub graph from index in array */
+						switch (indexCase) {
+							case 0: /** left  */
+								position_x = 0;
+								position_y = 200;
+								break;
+							case 1: /** bottom left */
+								position_x = 0;
+								position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
+								break;
+							case 2: /** bottom middle */
+								position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
+								position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
+								break;
+							case 3: /** bottom right */
+								position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
+								position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
+								break;
+							case 4:
+								position_x = this.sage2_x + this.sage2_width + gapBetweenSub;
+								position_y = 200;
+								break;
 						}
+					} catch (e) {
+						console.log(`Error func LaunchNewApp > ${e.message}`);
+					}
+					if (this.children.includes(null)) {
+						var index = this.children.indexOf(null);
+						this.children[index] = packet.targetId;
 					}
 					else {
-						position_x = 0;
-						position_y = this.sage2_y + this.sage2_height + 100;
+						this.children.push(packet.targetId);
 					}
-					this.children.push(packet.targetId);
 					break;
+			}
+			packet.defaultPosition = {
+				x: position_x,
+				y: position_y,
 			}
 			this.launchAppWithValues(this.title, packet, position_x, position_y);
 
@@ -483,7 +578,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				}
 				if (!this.children.includes(packet.targetId)) {
 					this.graphProperty.targetId = packet.targetId;
-					//this.children.push(packet.targetId);
 					this.launchNewApp(messageSub);
 				}
 				break;
@@ -493,6 +587,12 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 	handleCustomLaunchParams: function (packet) {
 		//console.log(`params:${JSON.stringify(packet)}`);
 		this.appId = packet.appId;
+		if (packet.hasOwnProperty('defaultPosition')) {
+			this.defaultPosition = {
+				x: packet.defaultPosition.x,
+				y: packet.defaultPosition.y,
+			}
+		}
 		if (packet.hasOwnProperty('appName')) {
 			this.updateTitle(`${this.title}: ${packet.appName}`);
 			this.appName = packet.appName;
@@ -573,7 +673,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			var promise = new Promise((resolve, reject) => {
 				try {
 					var index = this.children.indexOf(packet.oldTargetId);
-					if (index !== -1) this.children.splice(index, 1);
+					if (~index) this.children[index] = packet.newTargetId;
 					resolve(packet.newTargetId);
 				} catch (e) {
 					reject(e);
@@ -581,7 +681,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			})
 
 			promise.then((value) => {
-				this.children.push(value);
 				var packet = {
 					nameOfComponent: `graphComponent`,
 					callback: `handleSelectCyElement`,
@@ -705,9 +804,10 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 	sendSelectNodeToMap: function (packet) {
 		if (this.appId === packet.appId) {
-			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId); s
+			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.targetId);
 		}
 		else {
+			this.graphProperty.targetId = packet.targetId; /** Set defualt selected element */
 			this.sendDataToChildrenApps(`sendSelectNodeToMap`, packet)
 		}
 	},
@@ -734,14 +834,36 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
+	reposition: function () {
+		console.log(`Current position x:${this.sage2_x}, y:${this.sage2_y} reset to x:${this.defaultPosition.x}, y:${this.defaultPosition.y}`);
+		try {
+			var posAdjust = {};
+			posAdjust.appPositionAndSize = {};
+			posAdjust.appPositionAndSize.elemId = this.id;
+			posAdjust.appPositionAndSize.elemLeft = this.defaultPosition.x;
+			posAdjust.appPositionAndSize.elemTop = this.defaultPosition.y;
+			posAdjust.appPositionAndSize.elemHeight = this.sage2_height;
+			posAdjust.appPositionAndSize.elemWidth = this.sage2_width;
+			wsio.emit("updateApplicationPositionAndSize", posAdjust);
+		} catch (error) {
+			console.log(`Error func reposition > ${e}`)
+		}
+		if (Array.isArray(this.children) && this.children.length) {
+			this.sendDataToChildrenApps(`reposition`, {});
+		}
+	},
+
 	handleCloseApplication: function (id) {
 		try {
 			if (this.children.includes(id)) {
-				var index = this.children.indexOf(id);
-				if (index !== -1) this.children.splice(index, 1);
-				if (this.overlayChildren.includes(id)) {
-					var index = this.overlayChildren.indexOf(id);
-					if (index !== -1) this.overlayChildren.splice(index, 1);
+				if (this.graphProperty.graphType === 'main' && id !== 'map') {
+					var index = this.children.indexOf(id);
+					console.log(`INDEX REPLACE NULL ${index}`);
+					if (~index) this.children[index] = null;
+				}
+				else {
+					var index = this.children.indexOf(id);
+					if (~index) this.children.splice(index, 1);
 				}
 			}
 			else {

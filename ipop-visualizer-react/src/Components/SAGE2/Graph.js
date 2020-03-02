@@ -333,7 +333,7 @@ class Graph extends React.Component {
                 }).then(() => {
                     ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
                 }).catch( (e) => {
-                    console.log(`Error createNodeDetail > ${e}`);
+                    console.log(`Error createNodeDetail > ${e.message}`);
                 })
         }
         else {
@@ -569,6 +569,7 @@ class Graph extends React.Component {
                     callback: `handleSelectElement`,
                     targetId: this.state.currentSelectedElement.data().id,
                 }
+                console.log('set data select for map  ')
                 window.SAGE2_AppState.callFunctionInContainer(`sendSelectNodeToMap`, packet4map);
                 break;
             case 'sub':

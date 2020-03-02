@@ -78,6 +78,9 @@ class Tool extends React.Component {
                 }
                 window.SAGE2_AppState.callFunctionInContainer(`open`, packet);
                 break;
+            case 'reposition':
+                window.SAGE2_AppState.callFunctionInContainer(`reposition`, {});
+            break;
         }
     }
 
@@ -100,7 +103,7 @@ class Tool extends React.Component {
                 <Button type="button" variant="link" className=""><img src={refresh_ic} alt="refresh_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('search')}><img src={search_ic} alt="search_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('info')}><img src={info_ic} alt="info_ic" /></Button>
-                <Button type="button" variant="link" className=""><img src={rearrange_ic} alt="rearrange_ic" /></Button>
+                <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('reposition')}><img src={rearrange_ic} alt="rearrange_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('multi')}><img src={this.state.isMulti ? multi_ic : single_ic} alt="multi_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('map')}><img src={map_view_ic} alt="map_view_ic" /></Button>
             </div>

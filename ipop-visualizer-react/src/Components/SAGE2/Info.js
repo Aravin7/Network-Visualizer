@@ -18,8 +18,10 @@ class Info extends React.Component {
 
     componentDidMount() {
         var packet = {
-            width: 1500,
-            height: 700,
+            width: 700,
+            height: 500,
+            sage2w: 3840,
+            sage2h: 2160,
         }
         window.SAGE2_AppState.callFunctionInContainer('setWindowSize', packet);
     }

@@ -5,16 +5,9 @@ import Cytoscape from 'react-cytoscapejs';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-tippy/dist/tippy.css";
 import CreateGraphContents from './CreateGraphContents';
-import CollapseButton from "./CollapseButton";
-import Card from "react-bootstrap/Card";
 import RightPanel from "./RightPanel";
 import CytoscapeStyle from './CytoscapeStyle';
-import { nullLiteral } from "@babel/types";
-import OverlayTrigger from "react-bootstrap/OverlayTrigger";
-import Popover from "react-bootstrap/Popover";
-import Select from "react-select";
 import GoogleMapReact from "google-map-react";
-import { Button } from 'react-bootstrap';
 
 class Map extends React.Component {
 
@@ -59,7 +52,7 @@ class Map extends React.Component {
     }
 
     responseGraphProperty = (packet) => {
-        //console.log(`packet:${packet}`);
+        console.log(`packet:${packet}`);
         packet = JSON.parse(packet);
         this.setState({ selectedOverlay: packet.overlayId });
         var promise = new Promise((resolve, reject) => {
@@ -81,6 +74,18 @@ class Map extends React.Component {
                     this.cy.elements().style({ 'display': 'none' })
                     this.setState({ renderGraph: true })
                     //this.renderMapView();
+                })
+                .then(() => {
+                    if (packet.targetId) {
+                        try {
+                            var element = this.cy.elements(`#${packet.targetId}`);
+                            this.setState({ currentSelectedElement: element }, () => {
+                                this.handleSelectElement(packet.targetId);
+                            })
+                        } catch (e) {
+                            console.log(`Error func responseGraphProperty > ${e.message}`);
+                        }
+                    }
                 })
         })
     }
@@ -174,7 +179,7 @@ class Map extends React.Component {
                         center = { lat: lat, lng: lng };
                         zoom = this.getZoomLevel(this.getDistanceBetweenPoints(lat1, lng1, lat2, lng2) * 0.001)
                         console.log(`Distance in Kilometers: ${this.getDistanceBetweenPoints(lat1, lng1, lat2, lng2) * 0.001}`);
-                        resolve({center, zoom});
+                        resolve({ center, zoom });
                     }
                     else {
                         reject('Error handleSelectElement > Edge connect more than 2 nodes.');
@@ -220,39 +225,39 @@ class Map extends React.Component {
         let dLat = this.deg2rad(lat2 - lat1);
         let dLong = this.deg2rad(lng2 - lng1);
         let a = Math.sin(dLat / 2)
-                *
-                Math.sin(dLat / 2)
-                +
-                Math.cos(this.deg2rad(lat1))
-                *
-                Math.cos(this.deg2rad(lat1))
-                *
-                Math.sin(dLong / 2)
-                *
-                Math.sin(dLong / 2)
+            *
+            Math.sin(dLat / 2)
+            +
+            Math.cos(this.deg2rad(lat1))
+            *
+            Math.cos(this.deg2rad(lat1))
+            *
+            Math.sin(dLong / 2)
+            *
+            Math.sin(dLong / 2)
         let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         let distance = R * c;
         return distance;
     }
 
-    getZoomLevel = (distance) =>{
+    getZoomLevel = (distance) => {
         var zoom;
-        if(distance > 0 && distance < 20){
+        if (distance > 0 && distance < 20) {
             zoom = 12;
         }
-        else if(distance > 20 && distance < 100){
+        else if (distance > 20 && distance < 100) {
             zoom = 10;
         }
-        else if(distance > 100 && distance < 500){
+        else if (distance > 100 && distance < 500) {
             zoom = 8;
         }
-        else if(distance > 500 && distance < 1500){
+        else if (distance > 500 && distance < 1500) {
             zoom = 4;
         }
-        else if(distance > 1500 && distance < 5000){
+        else if (distance > 1500 && distance < 5000) {
             zoom = 2;
         }
-        else{
+        else {
             zoom = 1;
         }
         return zoom;
