@@ -106,12 +106,12 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			this.handleCustomLaunchParams(data.customLaunchParams);
 		} else {
 			console.log(`${ui.width},${ui.height}`);
-			this.element.src = 'http://150.29.149.79:3000/'; /* IP for React client server*/
+			this.element.src = 'http://150.29.149.79:8000/'; /* IP for React client server*/
+			//this.element.src = `${Config.React.ip}:${Config.React.port}/`
 			this.appName = 'Tool';
 			this.appId = 0;
 			this.updateTitle(`${this.title}: ${this.appName}`);
 		}
-
 	},
     /**
 	 * Determines if electron is the renderer (instead of a browser)
@@ -371,13 +371,12 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			var [x, y] = [this.sage2_x, this.sage2_y];
 			if (this.graphProperty.graphType === 'main') {
 				x = (ui.width / 2) - (width / 2);
-				y = 0;
 			}
 			else if (this.graphProperty.graphType === 'sub' || this.graphProperty.graphType === 'map') {
 				[x, y] = [this.sage2_x, this.sage2_y];
 			}
 			else {
-				[x, y] = [0, 300];
+				[x, y] = [0, 400];
 			}
 			this.defaultPosition = {
 				x: x,
@@ -393,9 +392,9 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			wsio.emit("updateApplicationPositionAndSize", posAdjust);
 		} else {
 			//this.sendResize(packet.width, packet.height);
-			var [x, y] = [0, 300];
+			var [x, y] = [0, 400];
 			if (this.appId === 0) {
-				y = 0;
+				y = 100;
 			}
 			this.defaultPosition = {
 				x: x,
@@ -466,57 +465,57 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 
 					/** New version */
 					try {
-						if (Array.isArray(this.children) && this.children.length) {
-							var childtemp = Array.from(this.children);
-							childtemp = childtemp.filter((child) => {
-								return child !== 'map';
-							})
-							if (childtemp.includes(null)) {
-								childtemp = childtemp.slice(0, childtemp.indexOf(null));
-							}
-							var indexCase = childtemp.length % 5;
-							var prevChild = null;
-							const gapBetweenSub = 100;
-							if (indexCase > 0) {
-								prevChild = childtemp.pop();
-								for (var i = 0; i < this.childrenAppIds.length; i++) {
-									try {
-										if (applications[this.childrenAppIds[i]].appId === prevChild) {
-											console.log(`Child AppId: ${applications[this.childrenAppIds[i]].appId} prevAppId:${prevChild}`);
-											var tempObj = applications[this.childrenAppIds[i]];
-											prevChild = tempObj;
-											break;
-										}
-									}
-									catch (error) {
-										console.log(`Error func LaunchNewApp get prevChild > ${error.message}`);
+						var childtemp = Array.from(this.children);
+						childtemp = childtemp.filter((child) => {
+							return child !== 'map';
+						})
+						if (childtemp.includes(null)) {
+							childtemp = childtemp.slice(0, childtemp.indexOf(null));
+						}
+						var indexCase = childtemp.length % 5;
+						var prevChild = null;
+						const gapBetweenSub = 100;
+						const gapStack = 100 * (Math.floor(childtemp.length / 5)); /** Make window stack when collapse. */
+
+						if (indexCase > 0) {
+							prevChild = childtemp.pop();
+							for (var i = 0; i < this.childrenAppIds.length; i++) {
+								try {
+									if (applications[this.childrenAppIds[i]].appId === prevChild) {
+										console.log(`Child AppId: ${applications[this.childrenAppIds[i]].appId} prevAppId:${prevChild}`);
+										var tempObj = applications[this.childrenAppIds[i]];
+										prevChild = tempObj;
+										break;
 									}
 								}
+								catch (error) {
+									console.log(`Error func LaunchNewApp get prevChild > ${error.message}`);
+								}
 							}
+						}
 
-							/** Set position from sub graph from index in array */
-							switch (indexCase) {
-								case 0: /** left  */
-									position_x = 0;
-									position_y = 200;
-									break;
-								case 1: /** bottom left */
-									position_x = 0;
-									position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
-									break;
-								case 2: /** bottom middle */
-									position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
-									position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
-									break;
-								case 3: /** bottom right */
-									position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub;
-									position_y = this.sage2_y + this.sage2_height + gapBetweenSub;
-									break;
-								case 4:
-									position_x = this.sage2_x + this.sage2_width + gapBetweenSub;
-									position_y = 200;
-									break;
-							}
+						/** Set position from sub graph from index in array */
+						switch (indexCase) {
+							case 0: /** left  */
+								position_x = 0 + gapStack;
+								position_y = 300 + gapStack;
+								break;
+							case 1: /** bottom left */
+								position_x = 0 + gapStack;
+								position_y = this.sage2_y + this.sage2_height + gapBetweenSub + gapStack;
+								break;
+							case 2: /** bottom middle */
+								position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub + gapStack;
+								position_y = this.sage2_y + this.sage2_height + gapBetweenSub + gapStack;
+								break;
+							case 3: /** bottom right */
+								position_x = prevChild.sage2_x + prevChild.sage2_width + gapBetweenSub + gapStack;
+								position_y = this.sage2_y + this.sage2_height + gapBetweenSub + gapStack;
+								break;
+							case 4:
+								position_x = this.sage2_x + this.sage2_width + gapBetweenSub + gapStack;
+								position_y = 300 + gapStack;
+								break;
 						}
 					} catch (e) {
 						console.log(`Error func LaunchNewApp > ${e.message}`);
@@ -611,7 +610,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		if (packet.hasOwnProperty('url')) {
 			this.element.src = packet.url;
 		}
-
 		this.cyElement = packet.options;
 
 	},
@@ -649,9 +647,7 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 				}
 				this.sendDataToChildrenApps('sendDataToSearch', message);
 			}
-			else {
-				this.cyElement = packet.element;
-			}
+			this.cyElement = packet.element;
 		}
 	},
 
@@ -849,22 +845,53 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 			posAdjust.appPositionAndSize.elemWidth = this.sage2_width;
 			wsio.emit("updateApplicationPositionAndSize", posAdjust);
 		} catch (error) {
-			console.log(`Error func reposition > ${e}`)
+			console.log(`Error func reposition > ${e}`);
 		}
 		if (Array.isArray(this.children) && this.children.length) {
 			this.sendDataToChildrenApps(`reposition`, {});
 		}
 	},
 
+	refreshGraph: function () {
+		try{
+			var packet = {
+				nameOfComponent: `graphComponent`,
+				callback: `handleRefresh`,
+				value: {},
+			}
+			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.value);
+		}catch(error){
+			console.log(`Error func refreshGraph > ${error}`);
+		}
+		if (Array.isArray(this.children) && this.children.length) {
+			this.sendDataToChildrenApps(`refreshGraph`, {});
+		}
+	},
+
 	handleCloseApplication: function (id) {
 		try {
+			/** Check if this is a parent that user close child app so, handle it. */
 			if (this.children.includes(id)) {
+				/** Replace array sub graph children with null ex. [null, 1, 2, null, ...] */
 				if (this.graphProperty.graphType === 'main' && id !== 'map') {
 					var index = this.children.indexOf(id);
 					console.log(`INDEX REPLACE NULL ${index}`);
 					if (~index) this.children[index] = null;
 				}
+				/** Remove children from children array. */
 				else {
+					/** Check if close main graph so clear data for search. */
+					if (this.appId === 0 && id !== 'info' && id !== 'search') {
+						this.cyElement = {};
+						if(this.children.includes('search')){
+							var packet = {
+								nameOfComponent: `searchComponent`,
+								callback: `responeSearchOption`,
+								value: this.cyElement,
+							}
+							this.sendDataToChildrenApps(`sendDataToSearch`, packet);
+						}
+					}
 					var index = this.children.indexOf(id);
 					if (~index) this.children.splice(index, 1);
 				}

@@ -90,7 +90,7 @@ header {
 }
 
 @media (max-width: 1280px) and (min-width: 0px) {
-    #elementDetails{
+    #elementDetails {
         font-size: 16px;
     }
     .Details {
@@ -103,71 +103,112 @@ header {
     #rightPanel {
         width: 30vw;
     }
+    #searchPage {
+        width: 100vw;
+        height: 100vh;
+        background-color: #101B2B;
+    }
 }
 
 @media (max-width: 1919px) and (min-width: 1281px) {
-    #elementDetails h2, .Details{
+    #elementDetails h2, .Details {
         font-size: 25px;
     }
     .DetailsLabel {
         color: gray;
         font-size: 25px;
     }
-    #connectedNode .DetailsLabel{
+    #connectedNode .DetailsLabel {
         font-size: 25px;
     }
-    #elementDetails, .collapseHeader{
+    #elementDetails, .collapseHeader {
         font-size: 20px;
     }
-    .collapseContent, .transmissionCard{
+    .collapseContent, .transmissionCard {
         font-size: 20px;
     }
     #rightPanel {
         width: 25vw;
     }
+    .rbt-input-hint-container input {
+        height: 15vh;
+        font-size: 50px;
+    }
+    .rbt-menu>li a {
+        font-size: 30px;
+    }
+    #searchPage {
+        width: 100vw;
+        height: 100vh;
+        background-color: #101B2B;
+    }
 }
 
 @media (max-width: 2460px) and (min-width: 1920px) {
-    #elementDetails, .collapseHeader{
+    #elementDetails, .collapseHeader {
         font-size: 30px;
     }
-    .collapseContent, .transmissionCard{
+    .collapseContent, .transmissionCard {
         font-size: 30px;
     }
-    #elementDetails h2, .Details{
+    #elementDetails h2, .Details {
         font-size: 45px;
     }
     .DetailsLabel {
         color: gray;
         font-size: 35px;
     }
-    #connectedNode .DetailsLabel{
+    #connectedNode .DetailsLabel {
         font-size: 35px;
     }
     #rightPanel {
         width: 30vw;
     }
+    .rbt-input-hint-container input {
+        height: 20vh;
+        font-size: 50px;
+    }
+    .rbt-menu>li a {
+        font-size: 30px;
+    }
+    #searchPage {
+        width: 100vw;
+        height: 100vh;
+        background-color: #101B2B;
+    }
 }
 
 @media (min-width: 2461px) {
-    #elementDetails, .collapseHeader{
+    #elementDetails, .collapseHeader {
         font-size: 35px;
     }
-    .collapseContent, .transmissionCard{
+    .collapseContent, .transmissionCard {
         font-size: 35px;
     }
-    #elementDetails h2, .Details{
+    #elementDetails h2, .Details {
         font-size: 50px;
     }
     .DetailsLabel {
         color: gray;
         font-size: 40px;
     }
-    #connectedNode .DetailsLabel{
+    #connectedNode .DetailsLabel {
         font-size: 40px;
     }
     #rightPanel {
         width: 30vw;
+    }
+    .rbt-input-hint-container input {
+        height: 20vh;
+        font-size: 50px;
+    }
+    .rbt-menu>li a {
+        font-size: 30px;
+    }
+    #searchPage {
+        width: 100vw;
+        height: 100vh;
+        background-color: #101B2B;
     }
 }
 
@@ -265,7 +306,6 @@ header {
     height: 20px;
 }
 
-
 #minusBtn {
     margin-top: 35.5vh;
     width: 60px;
@@ -337,7 +377,7 @@ table.info {
     max-width: 100%;
 }
 
-.nodeMarker{
+.nodeMarker {
     outline: none;
     border: none;
     background-color: #8AA626;
@@ -352,7 +392,7 @@ table.info {
     background-color: aqua;
 }
 
-.popover{
+.popover {
     max-width: unset;
     font-size: 50px;
 }
@@ -429,11 +469,3 @@ table.info {
         transform: rotate(360deg);
     }
 }
-
-/* .rbt-input-hint-container input{
-    height: 30vh;
-}
-
-.rbt-menu > li a {
-    height: 100px;
-} */

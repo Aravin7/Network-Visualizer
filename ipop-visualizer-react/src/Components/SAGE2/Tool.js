@@ -9,6 +9,7 @@ import map_view_ic from '../../Images/Icons/IconToolPage/map_view_ic.svg';
 import multi_ic from '../../Images/Icons/IconToolPage/multi_ic.svg';
 import single_ic from '../../Images/Icons/IconToolPage/single_ic.svg';
 import "../../CSS/SAGE2.css";
+import Config from "../../Config/config";
 
 class Tool extends React.Component {
     constructor(props) {
@@ -32,13 +33,15 @@ class Tool extends React.Component {
     handleOnClick = (target) => {
         switch (target) {
             case 'overlay':
-                window.open('http://150.29.149.79:3000/overlay'); /* IP for direct to React client server.*/
+                //window.open('http://150.29.149.79:3000/overlay'); /* IP for direct to React client server.*/
+                window.open(`${Config.React.perfix}${Config.React.ip}:${Config.React.port}/overlay`)
                 break;
             case 'search':
                 var packet = {
                     name: 'Search',
                     data: {
-                        url: 'http://150.29.149.79:3000/search', /* IP for direct to React client server.*/
+                        //url: 'http://150.29.149.79:3000/search', /* IP for direct to React client server.*/
+                        url: `${Config.React.perfix}${Config.React.ip}:${Config.React.port}/search`,
                         appName: 'search',
                         appId: `search`,
                     }
@@ -61,7 +64,8 @@ class Tool extends React.Component {
                     name: `Info`,
                     data: {
                         appName: `Legend`,
-                        url: `http://150.29.149.79:3000/info`,
+                        //url: `http://150.29.149.79:3000/info`, /* IP for direct to React client server.*/
+                        url: `${Config.React.perfix}${Config.React.ip}:${Config.React.port}/info`,
                         appId: `info`
                     }
                 }
@@ -72,7 +76,8 @@ class Tool extends React.Component {
                     name: 'MapView',
                     data: {
                         appName: `Map`,
-                        url: `http://150.29.149.79:3000/map`,
+                        //url: `http://150.29.149.79:3000/map`, /* IP for direct to React client server.*/
+                        url: `${Config.React.perfix}${Config.React.ip}:${Config.React.port}/map`,
                         appId: `map`
                     }
                 }
@@ -80,6 +85,9 @@ class Tool extends React.Component {
                 break;
             case 'reposition':
                 window.SAGE2_AppState.callFunctionInContainer(`reposition`, {});
+            break;
+            case 'refresh':
+                window.SAGE2_AppState.callFunctionInContainer(`refreshGraph`, {});
             break;
         }
     }
@@ -100,7 +108,7 @@ class Tool extends React.Component {
         return (
             <div className='ToolPage'>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('overlay')}><img src={overlay_ic} alt="overlay_ic" /></Button>
-                <Button type="button" variant="link" className=""><img src={refresh_ic} alt="refresh_ic" /></Button>
+                <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('refresh')}><img src={refresh_ic} alt="refresh_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('search')}><img src={search_ic} alt="search_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('info')}><img src={info_ic} alt="info_ic" /></Button>
                 <Button type="button" variant="link" className="" onClick={(e) => this.handleOnClick('reposition')}><img src={rearrange_ic} alt="rearrange_ic" /></Button>

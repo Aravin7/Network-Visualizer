@@ -9,12 +9,10 @@ import CollapseButton from "./CollapseButton";
 import Card from "react-bootstrap/Card";
 import RightPanel from "./RightPanel";
 import CytoscapeStyle from './CytoscapeStyle';
-import { nullLiteral } from "@babel/types";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 import Select from "react-select";
-import GoogleMapReact from "google-map-react";
-import { Button } from 'react-bootstrap';
+import Config from "../../Config/config";
 
 class Graph extends React.Component {
     constructor(props) {
@@ -271,7 +269,7 @@ class Graph extends React.Component {
             var ipop = this.state.ipop;
             fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${this.nodeLocations[sourceNode.nodeID][0]},${this.nodeLocations[sourceNode.nodeID][1]}&key=AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs&language=en`)
                 .then(res => res.json()).then((data) => {
-                    return data.results[data.results.length-3].formatted_address;
+                    return data.results[data.results.length - 3].formatted_address;
                 }).then((location) => {
                     rightPanelContent = <div id="elementDetails">
                         <h2>{sourceNode.nodeName}</h2>
@@ -279,7 +277,8 @@ class Graph extends React.Component {
                         {sourceNode.nodeID}
                         <div className="DetailsLabel">State</div>
                         {sourceNode.nodeState}
-                        <div className="DetailsLabel">City/Country</div>
+                        <div className="DetailsLabel">City/State/Country</div>
+                        {/* {sourceNode.location} wait for real data. */}
                         {location}
                         <br /><br />
                         <div id="connectedNode">
@@ -332,7 +331,7 @@ class Graph extends React.Component {
 
                 }).then(() => {
                     ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
-                }).catch( (e) => {
+                }).catch((e) => {
                     console.log(`Error createNodeDetail > ${e.message}`);
                 })
         }
@@ -355,86 +354,185 @@ class Graph extends React.Component {
             var linkDetails = this.state.linkDetails.linkDetails;
             var sourceNodeDetails = this.state.linkDetails.sourceNodeDetails;
             var targetNodeDetails = this.state.linkDetails.targetNodeDetails;
-            rightPanelContent = <div id='elementDetails'>
-                <h2>{linkDetails.InterfaceName}</h2>
 
-                <div className="row">
+            /** For test in demo location wait for real data. */
+            fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${this.nodeLocations[sourceNodeDetails.nodeID][0]},${this.nodeLocations[sourceNodeDetails.nodeID][1]}&key=AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs&language=en`)
+                .then(res => res.json()).then(data => {
+                    return data.results[data.results.length - 3].formatted_address;
+                }).then(sourceLocation => {
+                    fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${this.nodeLocations[targetNodeDetails.nodeID][0]},${this.nodeLocations[targetNodeDetails.nodeID][1]}&key=AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs&language=en`)
+                        .then(res => res.json()).then(data => {
+                            return data.results[data.results.length - 3].formatted_address;
+                        }).then(targetLocation => {
+                            rightPanelContent = <div id='elementDetails'>
+                                <h2>{linkDetails.InterfaceName}</h2>
 
-                    <div className="col-10" style={{ paddingRight: "0" }}>
+                                <div className="row">
 
-                        <CollapseButton className="sourceNodeBtn" key={sourceNodeDetails.nodeID + "Btn"} id={sourceNodeDetails.nodeID + "Btn"} name={sourceNodeDetails.nodeName}>
+                                    <div className="col-10" style={{ paddingRight: "0" }}>
 
-                            <div className="DetailsLabel">Node ID</div>
-                            {sourceNodeDetails.nodeID}
+                                        <CollapseButton className="sourceNodeBtn" key={sourceNodeDetails.nodeID + "Btn"} id={sourceNodeDetails.nodeID + "Btn"} name={sourceNodeDetails.nodeName}>
 
-                            <div className="DetailsLabel">State</div>
-                            {sourceNodeDetails.nodeState}
+                                            <div className="DetailsLabel">Node ID</div>
+                                            {sourceNodeDetails.nodeID}
 
-                            <div className="DetailsLabel">City/Country</div>
-                            {sourceNodeDetails.nodeLocation}
+                                            <div className="DetailsLabel">State</div>
+                                            {sourceNodeDetails.nodeState}
 
-                        </CollapseButton>
+                                            <div className="DetailsLabel">City/State/Country</div>
+                                            {/* {sourceNodeDetails.nodeLocation} */}
+                                            {sourceLocation}
 
-                        <CollapseButton className="targetNodeBtn" key={targetNodeDetails.nodeID + "Btn"} id={targetNodeDetails.nodeID + "Btn"} name={targetNodeDetails.nodeName}>
+                                        </CollapseButton>
 
-                            <div className="DetailsLabel">Node ID</div>
-                            {targetNodeDetails.nodeID}
+                                        <CollapseButton className="targetNodeBtn" key={targetNodeDetails.nodeID + "Btn"} id={targetNodeDetails.nodeID + "Btn"} name={targetNodeDetails.nodeName}>
 
-                            <div className="DetailsLabel">State</div>
-                            {targetNodeDetails.nodeState}
+                                            <div className="DetailsLabel">Node ID</div>
+                                            {targetNodeDetails.nodeID}
 
-                            <div className="DetailsLabel">City/Country</div>
-                            {targetNodeDetails.nodeLocation}
+                                            <div className="DetailsLabel">State</div>
+                                            {targetNodeDetails.nodeState}
 
-                        </CollapseButton>
+                                            <div className="DetailsLabel">City/State/Country</div>
+                                            {/* {targetNodeDetails.nodeLocation} */}
+                                            {targetLocation}
 
-                    </div>
+                                        </CollapseButton>
 
-                    <div className="col" style={{ margin: "auto", padding: "0", textAlign: "center" }}>
-                        <button onClick={this.handleSwitch} id="switchBtn" />
-                    </div>
+                                    </div>
 
-                </div>
+                                    <div className="col" style={{ margin: "auto", padding: "0", textAlign: "center" }}>
+                                        <button onClick={this.handleSwitch} id="switchBtn" />
+                                    </div>
 
-                <div className="DetailsLabel">Tunnel ID</div>
-                {linkDetails.TunnelID}
-                <div className="DetailsLabel">Interface Name</div>
-                {linkDetails.InterfaceName}
-                <div className="DetailsLabel">MAC</div>
-                {linkDetails.MAC}
-                <div className="DetailsLabel">State</div>
-                {linkDetails.State}
-                <div className="DetailsLabel">Tunnel Type</div>
-                {linkDetails.TunnelType}
-                <div className="DetailsLabel">ICE Connection Type</div>
-                {linkDetails.ICEConnectionType}
-                <div className="DetailsLabel">ICE Role</div>
-                {linkDetails.ICERole}
-                <div className="DetailsLabel">Remote Address</div>
-                {linkDetails.RemoteAddress}
-                <div className="DetailsLabel">Local Address</div>
-                {linkDetails.LocalAddress}
-                <div className="DetailsLabel">Latency</div>
-                {linkDetails.Latency}
-                <br /><br />
+                                </div>
 
-                <Card.Body className="transmissionCard">
-                    Sent
+                                <div className="DetailsLabel">Tunnel ID</div>
+                                {linkDetails.TunnelID}
+                                <div className="DetailsLabel">Interface Name</div>
+                                {linkDetails.InterfaceName}
+                                <div className="DetailsLabel">MAC</div>
+                                {linkDetails.MAC}
+                                <div className="DetailsLabel">State</div>
+                                {linkDetails.State}
+                                <div className="DetailsLabel">Tunnel Type</div>
+                                {linkDetails.TunnelType}
+                                <div className="DetailsLabel">ICE Connection Type</div>
+                                {linkDetails.ICEConnectionType}
+                                <div className="DetailsLabel">ICE Role</div>
+                                {linkDetails.ICERole}
+                                <div className="DetailsLabel">Remote Address</div>
+                                {linkDetails.RemoteAddress}
+                                <div className="DetailsLabel">Local Address</div>
+                                {linkDetails.LocalAddress}
+                                <div className="DetailsLabel">Latency</div>
+                                {linkDetails.Latency}
+                                <br /><br />
+
+                                <Card.Body className="transmissionCard">
+                                    Sent
                             <div className="DetailsLabel">Byte Sent</div>
-                    -
+                                    -
                             <div className="DetailsLabel">Total Byte Sent</div>
-                    {linkDetails.Stats[0].sent_total_bytes}
-                </Card.Body>
+                                    {linkDetails.Stats[0].sent_total_bytes}
+                                </Card.Body>
 
-                <Card.Body className="transmissionCard">
-                    Received
+                                <Card.Body className="transmissionCard">
+                                    Received
                             <div className="DetailsLabel">Byte Received</div>
-                    -
+                                    -
                             <div className="DetailsLabel">Total Byte Received</div>
-                    {linkDetails.Stats[0].recv_total_bytes}
-                </Card.Body>
-            </div>
-            this.toggleRightPanel(false);
+                                    {linkDetails.Stats[0].recv_total_bytes}
+                                </Card.Body>
+                            </div>
+                            this.toggleRightPanel(false);
+
+                        })
+                        .then(() => {
+                            ReactDOM.render(rightPanelContent, document.getElementById("rightPanelContent"));
+                        })
+                })
+
+            // rightPanelContent = <div id='elementDetails'>
+            //     <h2>{linkDetails.InterfaceName}</h2>
+
+            //     <div className="row">
+
+            //         <div className="col-10" style={{ paddingRight: "0" }}>
+
+            //             <CollapseButton className="sourceNodeBtn" key={sourceNodeDetails.nodeID + "Btn"} id={sourceNodeDetails.nodeID + "Btn"} name={sourceNodeDetails.nodeName}>
+
+            //                 <div className="DetailsLabel">Node ID</div>
+            //                 {sourceNodeDetails.nodeID}
+
+            //                 <div className="DetailsLabel">State</div>
+            //                 {sourceNodeDetails.nodeState}
+
+            //                 <div className="DetailsLabel">City/Country</div>
+            //                 {sourceNodeDetails.nodeLocation}
+
+            //             </CollapseButton>
+
+            //             <CollapseButton className="targetNodeBtn" key={targetNodeDetails.nodeID + "Btn"} id={targetNodeDetails.nodeID + "Btn"} name={targetNodeDetails.nodeName}>
+
+            //                 <div className="DetailsLabel">Node ID</div>
+            //                 {targetNodeDetails.nodeID}
+
+            //                 <div className="DetailsLabel">State</div>
+            //                 {targetNodeDetails.nodeState}
+
+            //                 <div className="DetailsLabel">City/Country</div>
+            //                 {targetNodeDetails.nodeLocation}
+
+            //             </CollapseButton>
+
+            //         </div>
+
+            //         <div className="col" style={{ margin: "auto", padding: "0", textAlign: "center" }}>
+            //             <button onClick={this.handleSwitch} id="switchBtn" />
+            //         </div>
+
+            //     </div>
+
+            //     <div className="DetailsLabel">Tunnel ID</div>
+            //     {linkDetails.TunnelID}
+            //     <div className="DetailsLabel">Interface Name</div>
+            //     {linkDetails.InterfaceName}
+            //     <div className="DetailsLabel">MAC</div>
+            //     {linkDetails.MAC}
+            //     <div className="DetailsLabel">State</div>
+            //     {linkDetails.State}
+            //     <div className="DetailsLabel">Tunnel Type</div>
+            //     {linkDetails.TunnelType}
+            //     <div className="DetailsLabel">ICE Connection Type</div>
+            //     {linkDetails.ICEConnectionType}
+            //     <div className="DetailsLabel">ICE Role</div>
+            //     {linkDetails.ICERole}
+            //     <div className="DetailsLabel">Remote Address</div>
+            //     {linkDetails.RemoteAddress}
+            //     <div className="DetailsLabel">Local Address</div>
+            //     {linkDetails.LocalAddress}
+            //     <div className="DetailsLabel">Latency</div>
+            //     {linkDetails.Latency}
+            //     <br /><br />
+
+            //     <Card.Body className="transmissionCard">
+            //         Sent
+            //                 <div className="DetailsLabel">Byte Sent</div>
+            //         -
+            //                 <div className="DetailsLabel">Total Byte Sent</div>
+            //         {linkDetails.Stats[0].sent_total_bytes}
+            //     </Card.Body>
+
+            //     <Card.Body className="transmissionCard">
+            //         Received
+            //                 <div className="DetailsLabel">Byte Received</div>
+            //         -
+            //                 <div className="DetailsLabel">Total Byte Received</div>
+            //         {linkDetails.Stats[0].recv_total_bytes}
+            //     </Card.Body>
+            // </div>
+            // this.toggleRightPanel(false);
         }
         else {
             rightPanelContent = <div></div>
@@ -474,7 +572,8 @@ class Graph extends React.Component {
      */
     fetchData = () => {
         var intervalNo = new Date().toISOString().split(".")[0];
-        var serverIP = '52.139.216.32:5000';
+        //var serverIP = '52.139.216.32:5000'; /** IP for IPOP server. */
+        var serverIP = `${Config.IPOP.ip}:${Config.IPOP.port}`;
         var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
 
         var nodeURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/nodes?interval=" + intervalNo + "&current_state=True";
@@ -556,7 +655,8 @@ class Graph extends React.Component {
         switch (this.state.graphType) {
             case 'main':
                 var packet = {
-                    url: 'http://150.29.149.79:3000/graph', /** IP for React client server */
+                    //url: 'http://150.29.149.79:3000/graph', /** IP for React client server */
+                    url: `${Config.React.perfix}${Config.React.ip}:${Config.React.port}/graph`,
                     targetId: id,
                     targetLabel: this.state.currentSelectedElement.data('label'),
                     overlayId: this.state.selectedOverlay,
@@ -709,6 +809,16 @@ class Graph extends React.Component {
 
     handleMakerClicked = (node) => {
         node.trigger('click');
+    }
+
+    handleRefresh = () => {
+        try{
+            this.cy.zoom(0.8);
+            document.getElementById('zoomSlider').value = this.cy.zoom();
+            this.cy.center();
+        }catch(e){
+            console.log(`Error func handleRefresh > ${e.message}`)
+        }
     }
 
     /**

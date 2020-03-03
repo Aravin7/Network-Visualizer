@@ -8,6 +8,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Accordion from "react-bootstrap/Accordion";
 import ipop_ic from "../../Images/Icons/ipop_ic.svg";
 import overlay_ic from "../../Images/Icons/overlay_ic.svg";
+import Config from "../../Config/config";
 
 class Overlay extends React.Component {
     constructor(props) {
@@ -20,7 +21,8 @@ class Overlay extends React.Component {
 
     componentDidMount() {
         var intervalNo = new Date().toISOString().split('.')[0];
-        var serverIP = '52.139.216.32:5000'; /* Server IP for get overlay */
+        //var serverIP = '52.139.216.32:5000'; /* Server IP for get overlay */
+        var serverIP = `${Config.IPOP.ip}:${Config.IPOP.port}`;
         var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
         var url = `${allowOrigin}http://${serverIP}/IPOP/overlays?interval=${intervalNo}&current_state=True`
         fetch(url).then(res => res.json())
@@ -49,7 +51,8 @@ class Overlay extends React.Component {
         this.setState({selectedOverlayId: overlayId})
         let packet = {
             type: `mainGraph`,
-            url: `http://150.29.149.79:3000/graph`,/** IP for React client server */
+            //url: `http://150.29.149.79:3000/graph`,/** IP for React client server */
+            url: `${Config.React.perfix}${Config.React.ip}:${Config.React.port}/graph`,
             overlayId: overlayId,
         }
         window.SAGE2_AppState.callFunctionInContainer('requestMainGraph',packet);

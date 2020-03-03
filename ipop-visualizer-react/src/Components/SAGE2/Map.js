@@ -52,7 +52,6 @@ class Map extends React.Component {
     }
 
     responseGraphProperty = (packet) => {
-        console.log(`packet:${packet}`);
         packet = JSON.parse(packet);
         this.setState({ selectedOverlay: packet.overlayId });
         var promise = new Promise((resolve, reject) => {
@@ -67,25 +66,15 @@ class Map extends React.Component {
         })
         promise.then(() => {
             this.createCytoscapeElement(packet).then(() => {
-                //this.setState({renderGraph:true})
                 this.renderGraph();
             })
                 .then(() => {
+                    if (packet.targetId) {
+                        var element = this.cy.elements(`#${packet.targetId}`);
+                        this.setState({ currentSelectedElement: element });
+                    }
                     this.cy.elements().style({ 'display': 'none' })
                     this.setState({ renderGraph: true })
-                    //this.renderMapView();
-                })
-                .then(() => {
-                    if (packet.targetId) {
-                        try {
-                            var element = this.cy.elements(`#${packet.targetId}`);
-                            this.setState({ currentSelectedElement: element }, () => {
-                                this.handleSelectElement(packet.targetId);
-                            })
-                        } catch (e) {
-                            console.log(`Error func responseGraphProperty > ${e.message}`);
-                        }
-                    }
                 })
         })
     }
@@ -159,7 +148,6 @@ class Map extends React.Component {
     }
 
     handleSelectElement = (id) => {
-        console.log('selected')
         try {
             this.resetAnimation(this.state.currentSelectedElement);
             var element = this.cy.elements(`#${id}`);
@@ -192,7 +180,7 @@ class Map extends React.Component {
                         })
                     })
                 }).catch((e) => {
-                    console.log(e)
+                    console.log(`Error handleSelectElement > ${e}`)
                 })
             }
         } catch (e) {
@@ -296,25 +284,6 @@ class Map extends React.Component {
             , document.getElementById('cy'))
     }
 
-    // renderMapView = () => {
-    //     var map = <GoogleMapReact
-    //         bootstrapURLKeys={{
-    //             key: "AIzaSyBjkkk4UyMh4-ihU1B1RR7uGocXpKECJhs",
-    //             language: 'en'
-    //         }}
-    //         defaultCenter={this.state.center}
-    //         center={this.state.center}
-    //         defaultZoom={this.state.zoom}
-    //     >
-    //         {this.cy.elements("node").map(node => {
-    //             return <button onClick={this.handleMakerClicked.bind(this, node)} id={node.data().id} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
-    //                 {node.data().label}
-    //             </button>
-    //         })}
-    //     </GoogleMapReact>
-    //     ReactDOM.render(map, document.getElementById("midArea"));
-    // }
-
     getRandomInRange(from, to, fixed) {
         return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
     }
@@ -334,7 +303,12 @@ class Map extends React.Component {
         }
     }
 
-
+    handleGoogleApiLoaded = ({ map, maps }) => {
+        console.log(`Render react-google-map completed...`);
+        if (this.state.currentSelectedElement) {
+            this.handleSelectElement(this.state.currentSelectedElement.data().id);
+        }
+    }
 
     render() {
         return (
@@ -354,6 +328,8 @@ class Map extends React.Component {
                                     defaultZoom={1}
                                     zoom={this.state.zoom}
                                     ref={this.googleMapReact}
+                                    yesIWantToUseGoogleMapApiInternals
+                                    onGoogleApiLoaded={this.handleGoogleApiLoaded}
                                 >
                                     {this.cy.elements("node").map(node => {
                                         return <button ref={this.nodeMaker} onClick={this.handleMakerClicked.bind(this, node)} id={`nodeMaker-${node.data().id}`} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
