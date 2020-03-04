@@ -23,16 +23,16 @@ class Map extends React.Component {
 
         }
         this.nodeLocations = {
-            a100001feb6040628e5fb7e70b04f001: [13.751769, 100.501287],
-            a100002feb6040628e5fb7e70b04f002: [29.639507, -82.317875],
-            a100003feb6040628e5fb7e70b04f003: [32.808629, 130.710253],
-            a100004feb6040628e5fb7e70b04f004: [35.723056, 140.826576],
-            a100005feb6040628e5fb7e70b04f005: [36.095354, 140.029521],
-            a100006feb6040628e5fb7e70b04f006: [30.613987, 104.068328],
-            a100007feb6040628e5fb7e70b04f007: [35.948014, 140.182366],
-            a100008feb6040628e5fb7e70b04f008: [21.120823, 79.103034],
-            a100009feb6040628e5fb7e70b04f009: [57.954472, 102.738448],
-            a100010feb6040628e5fb7e70b04f010: [36.062328, 140.135625],
+            a100001feb6040628e5fb7e70b04f001: [35.667780, 139.792468],
+            a100002feb6040628e5fb7e70b04f002: [36.063169, 140.135293],
+            a100003feb6040628e5fb7e70b04f003: [36.036767, 139.139504],
+            a100004feb6040628e5fb7e70b04f004: [36.124898, 138.014066],
+            a100005feb6040628e5fb7e70b04f005: [35.176555, 136.856869],
+            a100006feb6040628e5fb7e70b04f006: [34.992293, 135.762571],
+            a100007feb6040628e5fb7e70b04f007: [34.682988, 135.528840],
+            a100008feb6040628e5fb7e70b04f008: [35.864095, 139.667933],
+            a100009feb6040628e5fb7e70b04f009: [36.640714, 138.955405],
+            a100010feb6040628e5fb7e70b04f010: [34.377240, 132.457048]
         }
         this.googleMapReact = React.createRef();
         window.graphComponent = this;
@@ -153,7 +153,7 @@ class Map extends React.Component {
             var element = this.cy.elements(`#${id}`);
             if (element.isNode()) {
                 var center = { lat: parseFloat(element.data().lat), lng: parseFloat(element.data().lng) }
-                this.setState({ center: center, zoom: 15, currentSelectedElement: element }, () => {
+                this.setState({ center: center, zoom: 10, currentSelectedElement: element }, () => {
                     document.getElementById(`nodeMaker-${element.data().id}`).classList.add(`selected`);
                 })
             }
@@ -231,19 +231,19 @@ class Map extends React.Component {
     getZoomLevel = (distance) => {
         var zoom;
         if (distance > 0 && distance < 20) {
-            zoom = 12;
+            zoom = 10;
         }
         else if (distance > 20 && distance < 100) {
-            zoom = 10;
+            zoom = 9;
         }
         else if (distance > 100 && distance < 500) {
             zoom = 8;
         }
         else if (distance > 500 && distance < 1500) {
-            zoom = 4;
+            zoom = 7;
         }
         else if (distance > 1500 && distance < 5000) {
-            zoom = 2;
+            zoom = 5;
         }
         else {
             zoom = 1;
@@ -332,8 +332,10 @@ class Map extends React.Component {
                                     onGoogleApiLoaded={this.handleGoogleApiLoaded}
                                 >
                                     {this.cy.elements("node").map(node => {
-                                        return <button ref={this.nodeMaker} onClick={this.handleMakerClicked.bind(this, node)} id={`nodeMaker-${node.data().id}`} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
-                                            {node.data().label}
+                                        return <button key={node.data().id + `Maker`} onClick={this.handleMakerClicked.bind(this, node)} id={`nodeMaker-${node.data().id}`} className="nodeMarker" lat={node.data().lat} lng={node.data().lng}>
+                                            <label className="markerLabel">
+                                                {node.data().label}
+                                            </label>
                                         </button>
                                     })}
                                 </GoogleMapReact>

@@ -2,8 +2,6 @@ import React from "react";
 import "../../CSS/SAGE2.css";
 import ReactDOM from "react-dom";
 import Cytoscape from 'react-cytoscapejs';
-import "bootstrap/dist/css/bootstrap.min.css";
-import "react-tippy/dist/tippy.css";
 import CreateGraphContents from './CreateGraphContents';
 import CollapseButton from "./CollapseButton";
 import Card from "react-bootstrap/Card";
@@ -13,6 +11,10 @@ import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 import Select from "react-select";
 import Config from "../../Config/config";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "react-tippy/dist/tippy.css";
+import C3Chart from 'react-c3js'
+import 'c3/c3.css'
 
 class Graph extends React.Component {
     constructor(props) {
@@ -21,6 +23,7 @@ class Graph extends React.Component {
             nodes: [], links: [], initMinZoom: 0.2, initMaxZoom: 2, setMinZoom: 0.2, setMaxZoom: 2
             , switchToggle: false
             , isShowRightPanel: false
+            , isAutoRefresh: false
             , nodeDetails: null
             , linkDetails: null
             , currentSelectedElement: null
@@ -43,18 +46,34 @@ class Graph extends React.Component {
             { label: "2", value: "2" },
             { label: "5", value: "5" },
         ]
+        this.timer = null;
         this.nodeLocations = {
-            a100001feb6040628e5fb7e70b04f001: [13.751769, 100.501287],
-            a100002feb6040628e5fb7e70b04f002: [29.639507, -82.317875],
-            a100003feb6040628e5fb7e70b04f003: [32.808629, 130.710253],
-            a100004feb6040628e5fb7e70b04f004: [35.723056, 140.826576],
-            a100005feb6040628e5fb7e70b04f005: [36.095354, 140.029521],
-            a100006feb6040628e5fb7e70b04f006: [30.613987, 104.068328],
-            a100007feb6040628e5fb7e70b04f007: [35.948014, 140.182366],
-            a100008feb6040628e5fb7e70b04f008: [21.120823, 79.103034],
-            a100009feb6040628e5fb7e70b04f009: [57.954472, 102.738448],
-            a100010feb6040628e5fb7e70b04f010: [36.062328, 140.135625],
+            a100001feb6040628e5fb7e70b04f001: [35.667780, 139.792468],
+            a100002feb6040628e5fb7e70b04f002: [36.063169, 140.135293],
+            a100003feb6040628e5fb7e70b04f003: [36.036767, 139.139504],
+            a100004feb6040628e5fb7e70b04f004: [36.124898, 138.014066],
+            a100005feb6040628e5fb7e70b04f005: [35.176555, 136.856869],
+            a100006feb6040628e5fb7e70b04f006: [34.992293, 135.762571],
+            a100007feb6040628e5fb7e70b04f007: [34.682988, 135.528840],
+            a100008feb6040628e5fb7e70b04f008: [35.864095, 139.667933],
+            a100009feb6040628e5fb7e70b04f009: [36.640714, 138.955405],
+            a100010feb6040628e5fb7e70b04f010: [34.377240, 132.457048]
         }
+        this.customStyles = {
+            control: styles => ({ ...styles }),
+            option: (provided) => {
+                return {
+                    ...provided,
+                    'font-size': '30px',
+                };
+            },
+            singleValue: (provided, state) => {
+                return {
+                    ...provided,
+                    'font-size': '30px',
+                };
+            },
+        };
         window.graphComponent = this;
     }
 
@@ -84,6 +103,20 @@ class Graph extends React.Component {
         this.toggleRightPanel(true);
         this.requestGraphProperty();
         this.requestToolProperty();
+
+        // For test transmissionGraph
+        var date = new Date()
+        var dateList = []
+        for (let index = 0; index < 6; index++) {
+            dateList.push(date.setMinutes(date.getMinutes() + (index + 1)))
+        }
+        this.setState({ testDate: dateList })
+    }
+
+    componentWillUnmount() {
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
     }
 
     /**
@@ -283,47 +316,51 @@ class Graph extends React.Component {
                         <br /><br />
                         <div id="connectedNode">
                             {connectedNodes.map(connectedNode => {
-                                var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
-                                var connectedNodeBtn =
-                                    <CollapseButton key={ipop.getNodeName(connectedNode.id()) + "Btn"} id={ipop.getNodeName(connectedNode.id()) + "Btn"} name={ipop.getNodeName(connectedNode.id())}>
-                                        <div className="DetailsLabel">Node ID</div>
-                                        {connectedNode.id()}
-                                        <div className="DetailsLabel">Tunnel ID</div>
-                                        {connectedNodeDetail.TunnelID}
-                                        <div className="DetailsLabel">Interface Name</div>
-                                        {connectedNodeDetail.InterfaceName}
-                                        <div className="DetailsLabel">MAC</div>
-                                        {connectedNodeDetail.MAC}
-                                        <div className="DetailsLabel">State</div>
-                                        {connectedNodeDetail.State}
-                                        <div className="DetailsLabel">Tunnel Type</div>
-                                        {connectedNodeDetail.TunnelType}
-                                        <div className="DetailsLabel">ICE Connection Type</div>
-                                        {connectedNodeDetail.ICEConnectionType}
-                                        <div className="DetailsLabel">ICE Role</div>
-                                        {connectedNodeDetail.ICERole}
-                                        <div className="DetailsLabel">Remote Address</div>
-                                        {connectedNodeDetail.RemoteAddress}
-                                        <div className="DetailsLabel">Local Address</div>
-                                        {connectedNodeDetail.LocalAddress}
-                                        <div className="DetailsLabel">Latency</div>
-                                        {connectedNodeDetail.Latency}
-                                        <Card.Body className="transmissionCard">
-                                            Sent
+                                try {
+                                    var connectedNodeDetail = ipop.findConnectedNodeDetails(sourceNode.nodeID, connectedNode.id())
+                                    var connectedNodeBtn =
+                                        <CollapseButton key={ipop.getNodeName(connectedNode.id()) + "Btn"} id={ipop.getNodeName(connectedNode.id()) + "Btn"} name={ipop.getNodeName(connectedNode.id())}>
+                                            <div className="DetailsLabel">Node ID</div>
+                                            {connectedNode.id()}
+                                            <div className="DetailsLabel">Tunnel ID</div>
+                                            {connectedNodeDetail.TunnelID}
+                                            <div className="DetailsLabel">Interface Name</div>
+                                            {connectedNodeDetail.InterfaceName}
+                                            <div className="DetailsLabel">MAC</div>
+                                            {connectedNodeDetail.MAC}
+                                            <div className="DetailsLabel">State</div>
+                                            {connectedNodeDetail.State}
+                                            <div className="DetailsLabel">Tunnel Type</div>
+                                            {connectedNodeDetail.TunnelType}
+                                            <div className="DetailsLabel">ICE Connection Type</div>
+                                            {connectedNodeDetail.ICEConnectionType}
+                                            <div className="DetailsLabel">ICE Role</div>
+                                            {connectedNodeDetail.ICERole}
+                                            <div className="DetailsLabel">Remote Address</div>
+                                            {connectedNodeDetail.RemoteAddress}
+                                            <div className="DetailsLabel">Local Address</div>
+                                            {connectedNodeDetail.LocalAddress}
+                                            <div className="DetailsLabel">Latency</div>
+                                            {connectedNodeDetail.Latency}
+                                            <Card.Body className="transmissionCard">
+                                                Sent
                                             <div className="DetailsLabel">Byte Sent</div>
-                                            -
+                                                -
                                             <div className="DetailsLabel">Total Byte Sent</div>
-                                            {connectedNodeDetail.Stats[0].sent_total_bytes}
-                                        </Card.Body>
-                                        <Card.Body className="transmissionCard">
-                                            Received
+                                                {connectedNodeDetail.Stats[0].sent_total_bytes}
+                                            </Card.Body>
+                                            <Card.Body className="transmissionCard">
+                                                Received
                                             <div className="DetailsLabel">Byte Received</div>
-                                            -
+                                                -
                                             <div className="DetailsLabel">Total Byte Received</div>
-                                            {connectedNodeDetail.Stats[0].recv_total_bytes}
-                                        </Card.Body>
-                                    </CollapseButton>
-                                return connectedNodeBtn;
+                                                {connectedNodeDetail.Stats[0].recv_total_bytes}
+                                            </Card.Body>
+                                        </CollapseButton>
+                                    return connectedNodeBtn;
+                                } catch (e) {
+
+                                }
                             })}
                         </div>
                     </div>
@@ -444,6 +481,57 @@ class Graph extends React.Component {
                             <div className="DetailsLabel">Total Byte Received</div>
                                     {linkDetails.Stats[0].recv_total_bytes}
                                 </Card.Body>
+
+                                <Card.Body id='transmissionGraph' style={{ margin: '0', padding: '0' }} className="transmissionCard">
+                                    <C3Chart style={{ color: 'black' }}
+                                        data={{
+                                            x: 'x',
+                                            // xFormat: '%Y%m%d', // 'xFormat' can be used as custom format of 'x'
+                                            columns: [
+                                                ['x', this.state.testDate[0], this.state.testDate[1], this.state.testDate[2], this.state.testDate[3], this.state.testDate[4], this.state.testDate[5]],
+                                                // ['x', '20130101', '20130102', '20130103', '20130104', '20130105', '20130106'],
+                                                ['sent', 30, 200, 100, 400, 150, 250],
+                                                ['received', 130, 340, 200, 500, 250, 350]
+                                            ],
+                                            colors: {
+                                                sent: '#8FD24D',
+                                                received: '#42B2C3'
+                                            },
+                                            types: {
+                                                sent: 'area',
+                                                received: 'area'
+                                            }
+                                        }}
+                                        size={{
+                                            width: 550,
+                                            height: 330
+                                        }}
+                                        zoom={{
+                                            enabled: true
+                                        }}
+                                        axis={{
+                                            x: {
+                                                show: false,
+                                                type: 'timeseries',
+                                                localtime: false,
+                                                tick: {
+                                                    format: '%Y-%m-%d %H:%M:%S'
+                                                }
+                                            }
+                                        }}
+                                        tooltip={{
+                                            format: {
+                                                title: function (d) { return d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() },
+                                                value: function (value, ratio, id) {
+                                                    return value
+                                                }
+                                            }
+                                        }}
+                                        legend={{ show: false }}
+                                    ></C3Chart>
+                                </Card.Body>
+
+
                             </div>
                             this.toggleRightPanel(false);
 
@@ -639,6 +727,95 @@ class Graph extends React.Component {
             )
     }
 
+    autoFetchData = () => {
+        var intervalNo = new Date().toISOString().split(".")[0];
+        //var serverIP = '52.139.216.32:5000'; /** IP for IPOP server. */
+        var serverIP = `${Config.IPOP.ip}:${Config.IPOP.port}`;
+        var allowOrigin = 'https://cors-anywhere.herokuapp.com/';  /* you need to allow origin to get data from outside server*/
+
+        var nodeURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/nodes?interval=" + intervalNo + "&current_state=True";
+        var linkURL = allowOrigin + "http://" + serverIP + "/IPOP/overlays/" + this.state.selectedOverlay + "/links?interval=" + intervalNo + "&current_state=True";
+
+        var nodeList = [];
+        var linkList = [];
+        var ipop = new CreateGraphContents();
+
+        fetch(nodeURL)
+            .then(res => res.json())
+            .then(nodes =>
+                fetch(linkURL)
+                    .then(res => res.json())
+                    .then(links => {
+                        ipop.init(this.state.selectedOverlay, nodes, links);
+                        this.setState({ ipop: ipop });
+                        Object.keys(nodes[this.state.selectedOverlay]['current_state']).forEach(node => {
+                            /** Test lat lng for map view. */
+                            var [lat, lng] = [this.getRandomInRange(34, 40, 3), this.getRandomInRange(132, 140, 3)]
+                            var nodeJSON = `{ "data": { "id": "${node}", "label": "${nodes[this.state.selectedOverlay]['current_state'][node]['NodeName']}", "lat":"${this.nodeLocations[node][0]}", "lng":"${this.nodeLocations[node][1]}"}}`
+
+                            // var nodeJSON = `{ "data": { "id": "` + node + `", "label": "` + nodes[this.state.selectedOverlay]['current_state'][node]['NodeName'] + `" } }`
+                            var linkIds = Object.keys(links[this.state.selectedOverlay]['current_state'][node]);
+
+                            linkIds.forEach(linkIds => {
+                                var source = links[this.state.selectedOverlay]['current_state'][node][linkIds]["SrcNodeId"];
+                                var target = links[this.state.selectedOverlay]['current_state'][node][linkIds]["TgtNodeId"];
+                                var colorCode;
+                                switch (ipop.getLinkDetails(source, linkIds).TunnelType) {
+                                    case 'CETypeILongDistance':
+                                        colorCode = '#5E4FA2';
+                                        break;
+                                    case 'CETypeLongDistance':
+                                        colorCode = '#5E4FA2';
+                                        break;
+                                    case 'CETypePredecessor':
+                                        colorCode = '#5E4FA2';
+                                        break;
+                                    case 'CETypeSuccessor':
+                                        colorCode = '#5E4FA2';
+                                        break;
+                                }
+                                if (Object.keys(nodes[this.state.selectedOverlay]['current_state']).includes(target)) {
+                                    var linkJSON = `{ "data": {"id": "${linkIds}", "source": "${source}", "target": "${target}", "label": "${ipop.getLinkDetails(source, linkIds).InterfaceName}", "color":"${colorCode}" } }`;
+                                    linkList.push(JSON.parse(linkJSON));
+                                }
+                                this.setState({ links: linkList });
+                            });
+                            nodeList.push(JSON.parse(nodeJSON));
+                            this.setState({ nodes: nodeList })
+                            this.setOverlayElements(nodes, links);
+                        }
+                        )
+
+                    }
+                    ).then(() => {
+                        this.setState({ renderGraph: true }, () => {
+                            this.renderGraph();
+                        });
+                    }).then(() => {
+                        this.setDataForSearch(this.cy.json());
+                    })
+            )
+    }
+
+    demoFetchData = () => {
+        this.cy.elements(`#a100004feb6040628e5fb7e70b04f004`).addClass('notReport');
+        var packet = {
+            nameOfComponent: `graphComponent`,
+            callback: `demoFetchDataSubGraph`,
+            value: `a100004feb6040628e5fb7e70b04f004`,
+        }
+        window.SAGE2_AppState.callFunctionInContainer(`demoFetchData`, packet);
+    }
+
+    demoFetchDataSubGraph = (id) => {
+        console.log(`GET : ${id}`);
+        try{
+            this.cy.elements(`#${id}`).addClass('notReport');
+        }catch(error){
+            console.log(`Error func demoFetchDataSubGraph > ${error.message}`);
+        }
+    }
+
     /**
      * Section of `handle` method.
      * Includes >
@@ -757,26 +934,30 @@ class Graph extends React.Component {
     }
 
     handleSetMinZoom = (e) => {
-        try {
-            this.cy.minZoom(parseFloat(e.value));
-            document.getElementById("zoomSlider").min = parseFloat(e.value);
-        } finally {
-            if (this.cy.zoom() < parseFloat(e.value)) {
-                this.cy.zoom(parseFloat(e.value));
+        if (this.cy) {
+            try {
+                this.cy.minZoom(parseFloat(e.value));
+                document.getElementById("zoomSlider").min = parseFloat(e.value);
+            } finally {
+                if (this.cy.zoom() < parseFloat(e.value)) {
+                    this.cy.zoom(parseFloat(e.value));
+                }
+                this.setState({ setMinZoom: e.value })
             }
-            this.setState({ setMinZoom: e.value })
         }
     }
 
     handleSetMaxZoom = (e) => {
-        try {
-            this.cy.maxZoom(parseFloat(e.value));
-            document.getElementById("zoomSlider").max = parseFloat(e.value);
-        } finally {
-            if (this.cy.zoom() > parseFloat(e.value)) {
-                this.cy.zoom(parseFloat(e.value));
+        if (this.cy) {
+            try {
+                this.cy.maxZoom(parseFloat(e.value));
+                document.getElementById("zoomSlider").max = parseFloat(e.value);
+            } finally {
+                if (this.cy.zoom() > parseFloat(e.value)) {
+                    this.cy.zoom(parseFloat(e.value));
+                }
+                this.setState({ setMinZoom: e.value })
             }
-            this.setState({ setMinZoom: e.value })
         }
     }
 
@@ -803,7 +984,7 @@ class Graph extends React.Component {
         try {
             document.getElementById("zoomSlider").value = (this.cy.zoom());
         } catch (e) {
-            console.log(e)
+            console.log(`Error func handleWheel > ${e.message}`)
         }
     }
 
@@ -812,13 +993,33 @@ class Graph extends React.Component {
     }
 
     handleRefresh = () => {
-        try{
+        try {
             this.cy.zoom(0.8);
             document.getElementById('zoomSlider').value = this.cy.zoom();
             this.cy.center();
-        }catch(e){
+        } catch (e) {
             console.log(`Error func handleRefresh > ${e.message}`)
         }
+    }
+
+    handleAutoRefresh = () => {
+        this.setState(prevState => {
+            return { isAutoRefresh: !prevState.isAutoRefresh }
+        }, () => {
+            if (this.state.isAutoRefresh) {
+                this.timer = setInterval(() => {
+                    try {
+                        console.log(this.state.nodes);
+                        this.demoFetchData();
+                    } catch (error) {
+                        console.log(`Error func handleAutoRefresh > ${error}`)
+                    }
+                }, 5000)
+            }
+            else {
+                clearInterval(this.timer);
+            }
+        })
     }
 
     /**
@@ -1046,6 +1247,7 @@ class Graph extends React.Component {
                                 <Popover.Content id="viewContent">
                                     <div>
                                         <Select
+                                            styles={window.innerWidth > 1280 ? this.customStyles : ''}
                                             options={this.viewOptions}
                                             onChange={value => this.handleViewSelector(value)}
                                             value={this.state.viewSelector}
@@ -1067,6 +1269,7 @@ class Graph extends React.Component {
                                         </div>
                                         <div className="col">
                                             <Select
+                                                styles={window.innerWidth > 1280 ? this.customStyles : ''}
                                                 options={this.miniZoom}
                                                 onChange={value => this.handleSetMinZoom(value)}
                                                 value={{ label: this.state.setMinZoom, value: this.state.minZoom }}
@@ -1080,6 +1283,7 @@ class Graph extends React.Component {
                                         </div>
                                         <div className="col">
                                             <Select
+                                                styles={window.innerWidth > 1280 ? this.customStyles : ''}
                                                 options={this.maxZoom}
                                                 onChange={value => this.handleSetMaxZoom(value)}
                                                 value={{ label: this.state.setMaxZoom, value: this.state.maxZoom }}
@@ -1087,11 +1291,24 @@ class Graph extends React.Component {
                                             />
                                         </div>
                                     </div>
+                                    <div className="row">
+                                        <div className="col">
+                                            <label>Auto Refresh</label>
+                                        </div>
+                                        <div className="col">
+                                            <input type="checkbox"
+                                                className="autoRefreshCheck"
+                                                defaultChecked={this.state.isAutoRefresh}
+                                                onChange={this.handleAutoRefresh}
+                                            ></input>
+                                        </div>
+                                    </div>
                                 </Popover.Content>
                             </Popover>}>
                             <button onClick={this.handleConfigToggle} id="configBtn" className="leftToolsBtn"></button>
                         </OverlayTrigger>
 
+                        <button onClick={this.handleRefresh} id="refreshBtn"></button>
                         <button onClick={this.zoomIn} id="plusBtn"></button>
                         <div>
                             <input id="zoomSlider" onChange={this.handleZoomSlider} type="range"

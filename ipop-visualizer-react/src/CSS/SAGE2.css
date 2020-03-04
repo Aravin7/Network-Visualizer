@@ -142,6 +142,16 @@ header {
         height: 100vh;
         background-color: #101B2B;
     }
+    .popover {
+        max-width: unset;
+        width: 20vw;
+    }
+    .popover-header {
+        font-size: 30px;
+    }
+    .popover-body>.row>.col>label {
+        font-size: 30px;
+    }
 }
 
 @media (max-width: 2460px) and (min-width: 1920px) {
@@ -176,6 +186,16 @@ header {
         height: 100vh;
         background-color: #101B2B;
     }
+    .popover {
+        max-width: unset;
+        width: 20vw;
+    }
+    .popover-header {
+        font-size: 30px;
+    }
+    .popover-body>.row>.col>label {
+        font-size: 30px;
+    }
 }
 
 @media (min-width: 2461px) {
@@ -209,6 +229,16 @@ header {
         width: 100vw;
         height: 100vh;
         background-color: #101B2B;
+    }
+    .popover {
+        max-width: unset;
+        width: 20vw;
+    }
+    .popover-header {
+        font-size: 30px;
+    }
+    .popover-body>.row>.col>label {
+        font-size: 30px;
     }
 }
 
@@ -380,21 +410,46 @@ table.info {
 .nodeMarker {
     outline: none;
     border: none;
-    background-color: #8AA626;
-    text-align: center;
-    border-radius: 100%;
-    padding: 5%;
+    width: 70px;
+    height: 70px;
+    background: url("../Images/Icons/green_node_ic.svg") no-repeat;
+    background-size: contain;
+}
+
+.markerLabel {
+    font-size: medium;
+    margin: 0;
+    padding: 0;
     width: 60px;
-    height: 60px;
+    font-weight: bold;
 }
 
 .nodeMarker.selected {
-    background-color: aqua;
+    transform: translate(-15%, -15%);
+    outline: none;
+    border: none;
+    width: 100px;
+    height: 100px;
+    background: url('../Images/Icons/green_node_selected_ic.svg') no-repeat;
+    background-size: contain;
 }
 
-.popover {
-    max-width: unset;
-    font-size: 50px;
+input.autoRefreshCheck {
+    width: 100%;
+    height: 100%;
+}
+
+#transmissionGraph {
+    height: 27vh;
+}
+
+.c3 svg {
+    padding-top: 4%;
+    padding-right: 4%;
+}
+
+tspan {
+    font-size: 9px;
 }
 
 .loader {
