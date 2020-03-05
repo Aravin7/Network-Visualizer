@@ -719,8 +719,9 @@ class Graph extends React.Component {
 
                     }
                     ).then(() => {
-                        this.setState({ renderGraph: true });
-                        this.renderGraph();
+                        this.setState({ renderGraph: true }, () => {
+                            this.renderGraph();
+                        });
                     }).then(() => {
                         this.setDataForSearch(this.cy.json());
                     })
