@@ -868,15 +868,6 @@ var SAGE2_IPOPVisualizer = SAGE2_App.extend({
 		}
 	},
 
-	demoFetchData: function (packet) {
-		if(Array.isArray(this.children) && this.children.length){
-			this.sendDataToChildrenApps(`demoFetchData`, packet)
-		}
-		if(this.graphProperty.graphType !== 'main'){
-			this.callFunctionInComponent(packet.nameOfComponent, packet.callback, packet.value);
-		}
-	},
-
 	handleCloseApplication: function (id) {
 		try {
 			/** Check if this is a parent that user close child app so, handle it. */

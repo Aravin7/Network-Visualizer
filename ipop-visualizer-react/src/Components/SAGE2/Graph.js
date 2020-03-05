@@ -797,25 +797,6 @@ class Graph extends React.Component {
             )
     }
 
-    demoFetchData = () => {
-        this.cy.elements(`#a100004feb6040628e5fb7e70b04f004`).addClass('notReport');
-        var packet = {
-            nameOfComponent: `graphComponent`,
-            callback: `demoFetchDataSubGraph`,
-            value: `a100004feb6040628e5fb7e70b04f004`,
-        }
-        window.SAGE2_AppState.callFunctionInContainer(`demoFetchData`, packet);
-    }
-
-    demoFetchDataSubGraph = (id) => {
-        console.log(`GET : ${id}`);
-        try{
-            this.cy.elements(`#${id}`).addClass('notReport');
-        }catch(error){
-            console.log(`Error func demoFetchDataSubGraph > ${error.message}`);
-        }
-    }
-
     /**
      * Section of `handle` method.
      * Includes >
@@ -1009,12 +990,11 @@ class Graph extends React.Component {
             if (this.state.isAutoRefresh) {
                 this.timer = setInterval(() => {
                     try {
-                        console.log(this.state.nodes);
-                        this.demoFetchData();
+                        /** some action. */
                     } catch (error) {
                         console.log(`Error func handleAutoRefresh > ${error}`)
                     }
-                }, 5000)
+                }, 1000)
             }
             else {
                 clearInterval(this.timer);
